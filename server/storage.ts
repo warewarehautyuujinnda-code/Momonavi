@@ -143,7 +143,19 @@ export class MemStorage implements IStorage {
 
     sampleGroups.forEach((g) => {
       const group: Group = {
-        ...g,
+        id: g.id,
+        name: g.name,
+        university: g.university,
+        category: g.category,
+        genre: g.genre,
+        description: g.description,
+        atmosphereTags: g.atmosphereTags,
+        beginnerFriendly: g.beginnerFriendly ?? true,
+        memberCount: g.memberCount ?? null,
+        foundedYear: g.foundedYear ?? null,
+        practiceSchedule: g.practiceSchedule ?? null,
+        faqs: g.faqs ?? null,
+        contactInfo: g.contactInfo ?? null,
         createdAt: new Date()
       };
       this.groups.set(g.id, group);
@@ -252,7 +264,20 @@ export class MemStorage implements IStorage {
 
     sampleEvents.forEach((e) => {
       const event: Event = {
-        ...e,
+        id: e.id,
+        groupId: e.groupId,
+        title: e.title,
+        description: e.description,
+        date: e.date,
+        endDate: e.endDate ?? null,
+        location: e.location,
+        requirements: e.requirements ?? null,
+        beginnerWelcome: e.beginnerWelcome ?? true,
+        soloFriendliness: e.soloFriendliness ?? 3,
+        atmosphereTags: e.atmosphereTags,
+        participationFlow: e.participationFlow ?? null,
+        maxParticipants: e.maxParticipants ?? null,
+        status: e.status ?? "pending",
         createdAt: new Date()
       };
       this.events.set(e.id, event);
@@ -291,7 +316,13 @@ export class MemStorage implements IStorage {
 
     sampleReviews.forEach((r) => {
       const review: Review = {
-        ...r,
+        id: r.id,
+        eventId: r.eventId,
+        nickname: r.nickname ?? null,
+        rating: r.rating,
+        soloFriendlinessRating: r.soloFriendlinessRating,
+        atmosphereRating: r.atmosphereRating,
+        content: r.content,
         createdAt: new Date()
       };
       this.reviews.set(r.id, review);
@@ -319,8 +350,19 @@ export class MemStorage implements IStorage {
   async createGroup(insertGroup: InsertGroup): Promise<Group> {
     const id = randomUUID();
     const group: Group = {
-      ...insertGroup,
       id,
+      name: insertGroup.name,
+      university: insertGroup.university,
+      category: insertGroup.category,
+      genre: insertGroup.genre,
+      description: insertGroup.description,
+      atmosphereTags: insertGroup.atmosphereTags,
+      beginnerFriendly: insertGroup.beginnerFriendly ?? true,
+      memberCount: insertGroup.memberCount ?? null,
+      foundedYear: insertGroup.foundedYear ?? null,
+      practiceSchedule: insertGroup.practiceSchedule ?? null,
+      faqs: insertGroup.faqs ?? null,
+      contactInfo: insertGroup.contactInfo ?? null,
       createdAt: new Date()
     };
     this.groups.set(id, group);
@@ -358,8 +400,20 @@ export class MemStorage implements IStorage {
   async createEvent(insertEvent: InsertEvent): Promise<Event> {
     const id = randomUUID();
     const event: Event = {
-      ...insertEvent,
       id,
+      groupId: insertEvent.groupId,
+      title: insertEvent.title,
+      description: insertEvent.description,
+      date: insertEvent.date,
+      endDate: insertEvent.endDate ?? null,
+      location: insertEvent.location,
+      requirements: insertEvent.requirements ?? null,
+      beginnerWelcome: insertEvent.beginnerWelcome ?? true,
+      soloFriendliness: insertEvent.soloFriendliness ?? 3,
+      atmosphereTags: insertEvent.atmosphereTags,
+      participationFlow: insertEvent.participationFlow ?? null,
+      maxParticipants: insertEvent.maxParticipants ?? null,
+      status: insertEvent.status ?? "pending",
       createdAt: new Date()
     };
     this.events.set(id, event);
@@ -385,8 +439,13 @@ export class MemStorage implements IStorage {
   async createReview(insertReview: InsertReview): Promise<Review> {
     const id = randomUUID();
     const review: Review = {
-      ...insertReview,
       id,
+      eventId: insertReview.eventId,
+      nickname: insertReview.nickname ?? null,
+      rating: insertReview.rating,
+      soloFriendlinessRating: insertReview.soloFriendlinessRating,
+      atmosphereRating: insertReview.atmosphereRating,
+      content: insertReview.content,
       createdAt: new Date()
     };
     this.reviews.set(id, review);
@@ -409,8 +468,13 @@ export class MemStorage implements IStorage {
   async createCompanionPost(insertPost: InsertCompanionPost): Promise<CompanionPost> {
     const id = randomUUID();
     const post: CompanionPost = {
-      ...insertPost,
       id,
+      eventId: insertPost.eventId,
+      university: insertPost.university,
+      message: insertPost.message,
+      preferences: insertPost.preferences ?? null,
+      contactNote: insertPost.contactNote,
+      expiresAt: insertPost.expiresAt,
       createdAt: new Date()
     };
     this.companionPosts.set(id, post);
