@@ -1,24 +1,24 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
-import { ArrowRight, Users, MessageCircle, Sparkles } from "lucide-react";
+import { ArrowRight, Users, MessageCircle, MapPin } from "lucide-react";
 import heroImage from "@/assets/images/hero-students.jpg";
 
 const reasons = [
   {
     icon: Users,
-    title: "1人でも大丈夫",
-    description: "「1人参加しやすさ」で安心度がわかる",
+    title: "1人でも行きやすい新歓が見つかる",
+    description: "「1人参加しやすさ」で安心度がひと目でわかります",
   },
   {
     icon: MessageCircle,
-    title: "リアルな声",
-    description: "先輩たちの体験談が読める",
+    title: "実際に行った人の声が見られる",
+    description: "先輩たちのリアルな体験談を参考にできます",
   },
   {
-    icon: Sparkles,
-    title: "初心者歓迎",
-    description: "未経験OKが一目でわかる",
+    icon: MapPin,
+    title: "岡山ローカルに絞って迷わない",
+    description: "岡山大学・岡山理科大学・ノートルダム清心女子大学に特化",
   },
 ];
 
@@ -38,16 +38,15 @@ export default function HomePage() {
               岡山の大学新入生へ
             </p>
             
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight">
-              最初の一歩を、
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
+              新しい出会いが、
               <br />
-              ここから。
+              あなたの新しい可能性の扉を開く
             </h1>
             
-            <p className="text-xl text-white/90 leading-relaxed max-w-lg">
-              気になるサークル、見つけよう。
-              <br className="hidden sm:block" />
-              1人でも安心して参加できるイベントを探せます。
+            <p className="text-lg sm:text-xl text-white/90 leading-relaxed max-w-lg">
+              1人でも安心して参加できる新歓イベントを探して、
+              大学生活の第一歩を踏み出そう。
             </p>
             
             <div className="pt-4">
@@ -57,7 +56,7 @@ export default function HomePage() {
                   className="gap-3 text-lg px-8 py-6 rounded-2xl shadow-lg"
                   data-testid="button-search-events"
                 >
-                  イベントを探す
+                  イベント情報を見る
                   <ArrowRight className="h-5 w-5" />
                 </Button>
               </Link>
@@ -70,18 +69,21 @@ export default function HomePage() {
         <div className="container-narrow">
           <div className="text-center mb-16">
             <h2 className="text-2xl sm:text-3xl font-bold mb-4">
-              新歓ナビでできること
+              安心の3要素
             </h2>
             <p className="text-muted-foreground">
-              不安を安心に変える3つの特徴
+              新歓ナビだからできること
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12">
-            {reasons.map((reason) => (
-              <div key={reason.title} className="text-center space-y-4">
-                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                  <reason.icon className="h-8 w-8 text-primary" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
+            {reasons.map((reason, index) => (
+              <div key={reason.title} className="text-left space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 flex shrink-0">
+                    <reason.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <span className="text-4xl font-bold text-primary/20">{index + 1}</span>
                 </div>
                 <h3 className="text-lg font-semibold">{reason.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
@@ -110,25 +112,15 @@ export default function HomePage() {
               自分に合ったイベントを見つけてみませんか？
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+            <div className="pt-4">
               <Link href="/events">
                 <Button 
                   size="lg" 
                   className="gap-2 rounded-2xl px-8"
                   data-testid="button-find-events-cta"
                 >
-                  イベントを探す
+                  イベント情報を見る
                   <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-              <Link href="/groups">
-                <Button 
-                  size="lg" 
-                  variant="outline" 
-                  className="gap-2 rounded-2xl px-8"
-                  data-testid="button-search-groups"
-                >
-                  団体を探す
                 </Button>
               </Link>
             </div>

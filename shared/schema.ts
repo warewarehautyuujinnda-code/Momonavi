@@ -22,6 +22,12 @@ export const atmosphereTags = [
 ] as const;
 export type AtmosphereTag = typeof atmosphereTags[number];
 
+export const articleCategories = ['あるある', '想い'] as const;
+export type ArticleCategory = typeof articleCategories[number];
+
+export const contactTypes = ['一般', 'イベント掲載依頼'] as const;
+export type ContactType = typeof contactTypes[number];
+
 export const groups = pgTable("groups", {
   id: varchar("id", { length: 36 }).primaryKey(),
   name: text("name").notNull(),
@@ -36,6 +42,9 @@ export const groups = pgTable("groups", {
   practiceSchedule: text("practice_schedule"),
   faqs: text("faqs"),
   contactInfo: text("contact_info"),
+  instagramUrl: text("instagram_url"),
+  twitterUrl: text("twitter_url"),
+  lineUrl: text("line_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -53,6 +62,7 @@ export const events = pgTable("events", {
   atmosphereTags: text("atmosphere_tags").array().notNull(),
   participationFlow: text("participation_flow"),
   maxParticipants: integer("max_participants"),
+  imageUrl: text("image_url"),
   status: text("status").notNull().default('approved'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -79,23 +89,61 @@ export const companionPosts = pgTable("companion_posts", {
   expiresAt: timestamp("expires_at").notNull(),
 });
 
+export const articles = pgTable("articles", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  content: text("content").notNull(),
+  category: text("category").notNull(),
+  tags: text("tags").array().notNull(),
+  imageUrl: text("image_url"),
+  publishedAt: timestamp("published_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: varchar("id", { length: 36 }).primaryKey(),
+  type: text("type").notNull(),
+  name: text("name"),
+  university: text("university"),
+  contactMethod: text("contact_method").notNull(),
+  content: text("content").notNull(),
+  eventName: text("event_name"),
+  eventDate: text("event_date"),
+  eventLocation: text("event_location"),
+  eventDescription: text("event_description"),
+  eventImageUrl: text("event_image_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertGroupSchema = createInsertSchema(groups).omit({ id: true, createdAt: true });
 export const insertEventSchema = createInsertSchema(events).omit({ id: true, createdAt: true });
 export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true });
 export const insertCompanionPostSchema = createInsertSchema(companionPosts).omit({ id: true, createdAt: true });
+export const insertArticleSchema = createInsertSchema(articles).omit({ id: true, createdAt: true });
+export const insertContactSubmissionSchema = createInsertSchema(contactSubmissions).omit({ id: true, createdAt: true });
 
 export type InsertGroup = z.infer<typeof insertGroupSchema>;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type InsertCompanionPost = z.infer<typeof insertCompanionPostSchema>;
+export type InsertArticle = z.infer<typeof insertArticleSchema>;
+export type InsertContactSubmission = z.infer<typeof insertContactSubmissionSchema>;
 
 export type Group = typeof groups.$inferSelect;
 export type Event = typeof events.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type CompanionPost = typeof companionPosts.$inferSelect;
+export type Article = typeof articles.$inferSelect;
+export type ContactSubmission = typeof contactSubmissions.$inferSelect;
 
 export type EventWithGroup = Event & { group: Group };
 export type GroupWithEvents = Group & { events: Event[] };
+
+export type FAQ = {
+  question: string;
+  answer: string;
+};
 
 export const users = pgTable("users", {
   id: varchar("id").primaryKey(),

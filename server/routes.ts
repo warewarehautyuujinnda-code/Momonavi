@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertReviewSchema } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(
@@ -146,6 +145,72 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching group reviews:", error);
       res.status(500).json({ error: "Failed to fetch group reviews" });
+    }
+  });
+
+  // Get all articles
+  app.get("/api/articles", async (req, res) => {
+    try {
+      const articles = await storage.getArticles();
+      res.json(articles);
+    } catch (error) {
+      console.error("Error fetching articles:", error);
+      res.status(500).json({ error: "Failed to fetch articles" });
+    }
+  });
+
+  // Get single article
+  app.get("/api/articles/:id", async (req, res) => {
+    try {
+      const article = await storage.getArticle(req.params.id);
+      if (!article) {
+        return res.status(404).json({ error: "Article not found" });
+      }
+      res.json(article);
+    } catch (error) {
+      console.error("Error fetching article:", error);
+      res.status(500).json({ error: "Failed to fetch article" });
+    }
+  });
+
+  // Create contact submission
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const contactSchema = z.object({
+        type: z.enum(["一般", "イベント掲載依頼"]),
+        name: z.string().max(100).optional().nullable(),
+        university: z.string().optional().nullable(),
+        contactMethod: z.string().min(1).max(200),
+        content: z.string().min(10).max(2000),
+        eventName: z.string().max(200).optional().nullable(),
+        eventDate: z.string().max(100).optional().nullable(),
+        eventLocation: z.string().max(200).optional().nullable(),
+        eventDescription: z.string().max(2000).optional().nullable(),
+        eventImageUrl: z.string().url().optional().nullable(),
+      });
+
+      const validatedData = contactSchema.parse(req.body);
+
+      const submission = await storage.createContactSubmission({
+        type: validatedData.type,
+        name: validatedData.name || null,
+        university: validatedData.university || null,
+        contactMethod: validatedData.contactMethod,
+        content: validatedData.content,
+        eventName: validatedData.eventName || null,
+        eventDate: validatedData.eventDate || null,
+        eventLocation: validatedData.eventLocation || null,
+        eventDescription: validatedData.eventDescription || null,
+        eventImageUrl: validatedData.eventImageUrl || null,
+      });
+
+      res.status(201).json({ success: true, id: submission.id });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input", details: error.errors });
+      }
+      console.error("Error creating contact submission:", error);
+      res.status(500).json({ error: "Failed to submit" });
     }
   });
 

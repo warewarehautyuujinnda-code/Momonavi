@@ -3,6 +3,8 @@ import {
   type Event, type InsertEvent,
   type Review, type InsertReview,
   type CompanionPost, type InsertCompanionPost,
+  type Article, type InsertArticle,
+  type ContactSubmission, type InsertContactSubmission,
   type EventWithGroup, type GroupWithEvents
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -28,6 +30,13 @@ export interface IStorage {
   getCompanionPosts(): Promise<CompanionPost[]>;
   getCompanionPostsByEvent(eventId: string): Promise<CompanionPost[]>;
   createCompanionPost(post: InsertCompanionPost): Promise<CompanionPost>;
+  
+  // Articles
+  getArticles(): Promise<Article[]>;
+  getArticle(id: string): Promise<Article | undefined>;
+  
+  // Contact
+  createContactSubmission(submission: InsertContactSubmission): Promise<ContactSubmission>;
 }
 
 export class MemStorage implements IStorage {
@@ -35,13 +44,15 @@ export class MemStorage implements IStorage {
   private events: Map<string, Event> = new Map();
   private reviews: Map<string, Review> = new Map();
   private companionPosts: Map<string, CompanionPost> = new Map();
+  private articles: Map<string, Article> = new Map();
+  private contactSubmissions: Map<string, ContactSubmission> = new Map();
 
   constructor() {
     this.initializeSampleData();
   }
 
   private initializeSampleData() {
-    // Sample Groups
+    // Sample Groups with external links
     const sampleGroups: (InsertGroup & { id: string })[] = [
       {
         id: "g1",
@@ -59,7 +70,10 @@ export class MemStorage implements IStorage {
           { question: "未経験でも入れますか？", answer: "もちろんです！毎年未経験者も多く入部しています。先輩が丁寧に教えます。" },
           { question: "練習は厳しいですか？", answer: "楽しみながらも真剣に取り組んでいます。無理のないペースで上達できます。" }
         ]),
-        contactInfo: null
+        contactInfo: null,
+        instagramUrl: "https://instagram.com/example",
+        twitterUrl: "https://twitter.com/example",
+        lineUrl: null
       },
       {
         id: "g2",
@@ -77,7 +91,10 @@ export class MemStorage implements IStorage {
           { question: "楽器を持っていないのですが…", answer: "サークルで貸し出せる楽器もあります。まずは体験に来てください！" },
           { question: "ライブはありますか？", answer: "学園祭や定期ライブなど、年に数回発表の機会があります。" }
         ]),
-        contactInfo: null
+        contactInfo: null,
+        instagramUrl: "https://instagram.com/beat_okayama",
+        twitterUrl: null,
+        lineUrl: "https://line.me/example"
       },
       {
         id: "g3",
@@ -92,7 +109,10 @@ export class MemStorage implements IStorage {
         foundedYear: 1972,
         practiceSchedule: "週4回（火・木・土・日）",
         faqs: null,
-        contactInfo: null
+        contactInfo: null,
+        instagramUrl: "https://instagram.com/ous_soccer",
+        twitterUrl: "https://twitter.com/ous_soccer",
+        lineUrl: null
       },
       {
         id: "g4",
@@ -107,7 +127,10 @@ export class MemStorage implements IStorage {
         foundedYear: 2005,
         practiceSchedule: "月2回（土曜日）",
         faqs: null,
-        contactInfo: null
+        contactInfo: null,
+        instagramUrl: "https://instagram.com/lens_photo",
+        twitterUrl: null,
+        lineUrl: null
       },
       {
         id: "g5",
@@ -122,7 +145,10 @@ export class MemStorage implements IStorage {
         foundedYear: 2010,
         practiceSchedule: "週1回（水曜日）",
         faqs: null,
-        contactInfo: null
+        contactInfo: null,
+        instagramUrl: "https://instagram.com/global_friends_nd",
+        twitterUrl: null,
+        lineUrl: "https://line.me/globalfriends"
       },
       {
         id: "g6",
@@ -137,7 +163,10 @@ export class MemStorage implements IStorage {
         foundedYear: 1985,
         practiceSchedule: "週3回（月・木・土）",
         faqs: null,
-        contactInfo: null
+        contactInfo: null,
+        instagramUrl: null,
+        twitterUrl: "https://twitter.com/stage_nd",
+        lineUrl: null
       }
     ];
 
@@ -156,6 +185,9 @@ export class MemStorage implements IStorage {
         practiceSchedule: g.practiceSchedule ?? null,
         faqs: g.faqs ?? null,
         contactInfo: g.contactInfo ?? null,
+        instagramUrl: g.instagramUrl ?? null,
+        twitterUrl: g.twitterUrl ?? null,
+        lineUrl: g.lineUrl ?? null,
         createdAt: new Date()
       };
       this.groups.set(g.id, group);
@@ -178,6 +210,7 @@ export class MemStorage implements IStorage {
         atmosphereTags: ["アットホーム", "初心者歓迎"],
         participationFlow: "1. 受付で名前を書く\n2. 準備体操\n3. 基本練習体験\n4. ミニゲーム\n5. 質問タイム・交流会",
         maxParticipants: 30,
+        imageUrl: null,
         status: "approved"
       },
       {
@@ -194,6 +227,7 @@ export class MemStorage implements IStorage {
         atmosphereTags: ["ゆるい", "初心者歓迎"],
         participationFlow: "1. 自己紹介\n2. 楽器紹介\n3. 楽器体験（ローテーション）\n4. 先輩のミニライブ\n5. 質問・交流タイム",
         maxParticipants: 50,
+        imageUrl: null,
         status: "approved"
       },
       {
@@ -210,6 +244,7 @@ export class MemStorage implements IStorage {
         atmosphereTags: ["真剣", "初心者歓迎"],
         participationFlow: "1. 集合・ウォームアップ\n2. チーム分け\n3. ミニゲーム\n4. 休憩・交流\n5. 部活動紹介",
         maxParticipants: 40,
+        imageUrl: null,
         status: "approved"
       },
       {
@@ -226,6 +261,7 @@ export class MemStorage implements IStorage {
         atmosphereTags: ["ゆるい", "初心者歓迎", "少人数"],
         participationFlow: "1. 集合・自己紹介\n2. 撮影基礎レクチャー\n3. 園内散策・撮影\n4. 写真共有会\n5. お茶しながら交流",
         maxParticipants: 15,
+        imageUrl: null,
         status: "approved"
       },
       {
@@ -242,6 +278,7 @@ export class MemStorage implements IStorage {
         atmosphereTags: ["アットホーム", "初心者歓迎"],
         participationFlow: "1. 受付\n2. アイスブレイクゲーム\n3. フリートーク\n4. サークル紹介\n5. 連絡先交換タイム",
         maxParticipants: 40,
+        imageUrl: null,
         status: "approved"
       },
       {
@@ -258,6 +295,7 @@ export class MemStorage implements IStorage {
         atmosphereTags: ["アットホーム", "初心者歓迎"],
         participationFlow: "1. ストレッチ・発声練習\n2. 表現ゲーム\n3. 簡単なシーン体験\n4. 過去公演の紹介\n5. 質問・交流タイム",
         maxParticipants: 20,
+        imageUrl: null,
         status: "approved"
       }
     ];
@@ -277,6 +315,7 @@ export class MemStorage implements IStorage {
         atmosphereTags: e.atmosphereTags,
         participationFlow: e.participationFlow ?? null,
         maxParticipants: e.maxParticipants ?? null,
+        imageUrl: e.imageUrl ?? null,
         status: e.status ?? "pending",
         createdAt: new Date()
       };
@@ -327,6 +366,197 @@ export class MemStorage implements IStorage {
       };
       this.reviews.set(r.id, review);
     });
+
+    // Sample Articles
+    const sampleArticles: (InsertArticle & { id: string })[] = [
+      {
+        id: "a1",
+        title: "新歓あるある：最初の一歩が一番難しい",
+        summary: "「行きたいけど、1人だと不安...」そんな気持ち、みんな同じです。先輩たちの新歓エピソードを紹介します。",
+        content: `## 新歓って緊張しますよね
+
+「行ってみたいけど、知り合いがいない...」
+「1人で行って浮かないかな...」
+
+新入生なら誰もが感じる不安。でも実は、先輩たちも同じ気持ちでした。
+
+## 先輩たちの声
+
+### バレー部3年 田中さん
+「私も1年の時は、1人で新歓に行くのがすごく怖かったです。でも行ってみたら、同じように1人で来てる子がたくさんいて、すぐ仲良くなれました。今では一番の親友です。」
+
+### 軽音サークル2年 佐藤さん
+「最初は友達と行こうとしてたけど、予定が合わなくて結局1人で参加。正直不安でしたが、先輩がすごく話しかけてくれて、気づいたら3時間くらい楽しんでました（笑）」
+
+## 1人参加のコツ
+
+1. **最初の5分だけ頑張る** - 受付を済ませたら、あとは流れに任せるだけ
+2. **質問を1つ用意しておく** - 「普段の練習は何をしますか？」など、話すきっかけになる
+3. **同じように1人の子を探す** - 案外たくさんいます
+
+## 最後に
+
+新歓は「行く」か「行かない」かの二択。迷ったら行ってみよう。
+何も起きなければ帰ればいいだけ。でも、一生の友達に出会えるかもしれない。`,
+        category: "あるある",
+        tags: ["新歓", "1人参加", "先輩の声"],
+        imageUrl: null,
+        publishedAt: new Date(now.getTime() - 2 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: "a2",
+        title: "サークル選びで失敗しないための3つのポイント",
+        summary: "「入ってから後悔したくない」という方へ。サークル選びで大切なことをまとめました。",
+        content: `## サークル選び、迷いますよね
+
+大学には数十〜数百のサークルや部活があります。
+「どれを選べばいいか分からない」という声をよく聞きます。
+
+ここでは、サークル選びで後悔しないためのポイントを3つ紹介します。
+
+## ポイント1：雰囲気を見る
+
+パンフレットやSNSだけでは分からないのが「雰囲気」。
+実際に新歓に行って、メンバーの様子を見てみましょう。
+
+チェックポイント：
+- 先輩同士の関係性は良さそう？
+- 新入生への対応は丁寧？
+- 自分と雰囲気が合いそう？
+
+## ポイント2：活動頻度を確認
+
+「週1のつもりが週5だった...」なんてことも。
+入る前に必ず確認しましょう。
+
+質問例：
+- 普段の練習は週何回ですか？
+- 練習に来れない日があっても大丈夫ですか？
+- 試験期間中はどうなりますか？
+
+## ポイント3：複数見て比較する
+
+1つだけ見て決めるのはもったいない！
+最低3つは見学して、比較してみましょう。
+
+意外と「第二志望だったサークルの方が合ってた」なんてこともあります。
+
+## 焦らなくて大丈夫
+
+4月中に決める必要はありません。
+5月、6月に入部する人もたくさんいます。
+
+じっくり選んで、4年間楽しめる場所を見つけてください。`,
+        category: "あるある",
+        tags: ["サークル選び", "ポイント", "新入生向け"],
+        imageUrl: null,
+        publishedAt: new Date(now.getTime() - 5 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: "a3",
+        title: "このサイトを作った理由",
+        summary: "「行動量を増やしたい」という想いから、このサイトを作りました。運営者の想いを綴ります。",
+        content: `## はじめまして
+
+このサイトを作った運営者です。
+なぜこのサイトを作ったのか、少しだけ聞いてください。
+
+## きっかけ
+
+私自身、大学1年生の時は「行きたいけど行けない」タイプでした。
+
+新歓のチラシを見ては「面白そう」と思うけど、
+いざとなると「やっぱり1人じゃ無理」と尻込みしてしまう。
+
+結局、サークルに入ったのは2年生になってから。
+「もっと早く行動していれば」と何度も思いました。
+
+## 行動量を増やしたい
+
+大学生活の満足度は「行動量」に比例する気がしています。
+
+新歓に行く、サークルに入る、イベントに参加する。
+1つ1つは小さな行動だけど、それが積み重なって大学生活を作っていく。
+
+でも、その「最初の一歩」が一番難しい。
+
+## このサイトの役割
+
+だからこそ、このサイトでは：
+
+- **1人でも行きやすいイベントを見つけられる**
+- **実際に行った人の声が見られる**
+- **岡山の大学に絞って迷わない**
+
+という3つを大切にしています。
+
+## 最後に
+
+「行きたいけど、一歩が出ない」
+
+そんな気持ち、すごくよく分かります。
+でも、その一歩を踏み出した先には、きっと新しい出会いがあります。
+
+このサイトが、あなたの背中を少しでも押せたら嬉しいです。`,
+        category: "想い",
+        tags: ["運営者", "想い", "行動量"],
+        imageUrl: null,
+        publishedAt: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000)
+      },
+      {
+        id: "a4",
+        title: "「友達できるかな」の不安を乗り越えた話",
+        summary: "大学で友達ができるか不安だった私が、どうやって仲間を見つけたのかを振り返ります。",
+        content: `## 入学前の不安
+
+高校の友達は地元に残り、私だけ岡山へ。
+「友達できるかな...」という不安で、入学式の前夜は眠れませんでした。
+
+## 最初の1週間
+
+入学式、ガイダンス、授業開始。
+周りを見ると、すでにグループができている気がして焦りました。
+
+「出遅れた」と思いました。
+
+## 転機は新歓
+
+そんな時、ふと目に入った新歓のチラシ。
+「1人参加大歓迎」の文字に惹かれて、勇気を出して参加しました。
+
+行ってみたら、同じように1人で来ている子がたくさん。
+「あ、みんな同じなんだ」と気づいた瞬間、肩の力が抜けました。
+
+## 今思うこと
+
+結局、最初にできたグループが一生続くわけじゃない。
+大学は、いつでも新しい出会いがある場所です。
+
+焦らなくていい。
+でも、チャンスが来たら飛び込んでみて。
+
+きっと、あなたを待っている仲間がいます。`,
+        category: "あるある",
+        tags: ["友達", "不安", "体験談"],
+        imageUrl: null,
+        publishedAt: new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      }
+    ];
+
+    sampleArticles.forEach((a) => {
+      const article: Article = {
+        id: a.id,
+        title: a.title,
+        summary: a.summary,
+        content: a.content,
+        category: a.category,
+        tags: a.tags,
+        imageUrl: a.imageUrl ?? null,
+        publishedAt: a.publishedAt,
+        createdAt: new Date()
+      };
+      this.articles.set(a.id, article);
+    });
   }
 
   // Groups
@@ -363,6 +593,9 @@ export class MemStorage implements IStorage {
       practiceSchedule: insertGroup.practiceSchedule ?? null,
       faqs: insertGroup.faqs ?? null,
       contactInfo: insertGroup.contactInfo ?? null,
+      instagramUrl: insertGroup.instagramUrl ?? null,
+      twitterUrl: insertGroup.twitterUrl ?? null,
+      lineUrl: insertGroup.lineUrl ?? null,
       createdAt: new Date()
     };
     this.groups.set(id, group);
@@ -413,6 +646,7 @@ export class MemStorage implements IStorage {
       atmosphereTags: insertEvent.atmosphereTags,
       participationFlow: insertEvent.participationFlow ?? null,
       maxParticipants: insertEvent.maxParticipants ?? null,
+      imageUrl: insertEvent.imageUrl ?? null,
       status: insertEvent.status ?? "pending",
       createdAt: new Date()
     };
@@ -479,6 +713,37 @@ export class MemStorage implements IStorage {
     };
     this.companionPosts.set(id, post);
     return post;
+  }
+
+  // Articles
+  async getArticles(): Promise<Article[]> {
+    return Array.from(this.articles.values())
+      .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+  }
+
+  async getArticle(id: string): Promise<Article | undefined> {
+    return this.articles.get(id);
+  }
+
+  // Contact
+  async createContactSubmission(insertSubmission: InsertContactSubmission): Promise<ContactSubmission> {
+    const id = randomUUID();
+    const submission: ContactSubmission = {
+      id,
+      type: insertSubmission.type,
+      name: insertSubmission.name ?? null,
+      university: insertSubmission.university ?? null,
+      contactMethod: insertSubmission.contactMethod,
+      content: insertSubmission.content,
+      eventName: insertSubmission.eventName ?? null,
+      eventDate: insertSubmission.eventDate ?? null,
+      eventLocation: insertSubmission.eventLocation ?? null,
+      eventDescription: insertSubmission.eventDescription ?? null,
+      eventImageUrl: insertSubmission.eventImageUrl ?? null,
+      createdAt: new Date()
+    };
+    this.contactSubmissions.set(id, submission);
+    return submission;
   }
 }
 
