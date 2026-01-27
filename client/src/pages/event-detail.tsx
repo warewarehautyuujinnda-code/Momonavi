@@ -7,17 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import { 
   Calendar, 
   MapPin, 
   Users, 
-  Sparkles, 
   ChevronLeft,
-  Building2,
   Backpack,
   ArrowRight,
-  MessageSquare,
   Star
 } from "lucide-react";
 import { format } from "date-fns";
@@ -26,22 +22,22 @@ import type { EventWithGroup, Review } from "@shared/schema";
 
 function SoloFriendlinessBar({ level }: { level: number }) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between text-sm">
-        <span className="text-muted-foreground">1人参加しやすさ</span>
-        <span className="font-medium">{level}/5</span>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-muted-foreground">1人参加しやすさ</span>
+        <span className="text-lg font-semibold text-primary">{level}/5</span>
       </div>
-      <div className="flex gap-1">
+      <div className="flex gap-1.5">
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className={`h-2 flex-1 rounded-full ${
+            className={`h-2.5 flex-1 rounded-full ${
               i <= level ? "bg-primary" : "bg-muted"
             }`}
           />
         ))}
       </div>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-sm text-muted-foreground leading-relaxed">
         {level >= 4
           ? "1人での参加者が多く、とても参加しやすい雰囲気です"
           : level >= 3
@@ -68,10 +64,10 @@ export default function EventDetailPage() {
   if (eventLoading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8 space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-64 w-full rounded-lg" />
-          <Skeleton className="h-32 w-full rounded-lg" />
+        <div className="container-narrow py-10 space-y-8">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
         </div>
       </Layout>
     );
@@ -80,12 +76,12 @@ export default function EventDetailPage() {
   if (!event) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-16 text-center">
-          <p className="text-lg text-muted-foreground">
+        <div className="container-narrow py-20 text-center">
+          <p className="text-lg text-muted-foreground mb-6">
             イベントが見つかりませんでした
           </p>
           <Link href="/events">
-            <Button variant="outline" className="mt-4 gap-2">
+            <Button variant="outline" className="gap-2 rounded-xl">
               <ChevronLeft className="h-4 w-4" />
               イベント一覧に戻る
             </Button>
@@ -100,52 +96,52 @@ export default function EventDetailPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="space-y-6">
+      <div className="container-narrow py-10 sm:py-14">
+        <div className="space-y-8">
           <Link href="/events">
-            <Button variant="ghost" size="sm" className="gap-1 -ml-2" data-testid="button-back">
+            <Button variant="ghost" className="gap-2 -ml-4 rounded-xl" data-testid="button-back">
               <ChevronLeft className="h-4 w-4" />
               イベント一覧
             </Button>
           </Link>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{event.group.university}</Badge>
-              <Badge variant="outline">{event.group.category}</Badge>
+              <Badge variant="secondary" className="rounded-lg">{event.group.university}</Badge>
+              <Badge variant="outline" className="rounded-lg border-muted-foreground/20">{event.group.category}</Badge>
               {event.beginnerWelcome && (
-                <Badge className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
-                  <Sparkles className="h-3 w-3 mr-1" />
+                <Badge className="bg-primary/10 text-primary border-0 rounded-lg">
                   初心者歓迎
                 </Badge>
               )}
               {isPast && (
-                <Badge variant="secondary" className="bg-muted">
+                <Badge variant="secondary" className="bg-muted rounded-lg">
                   終了済み
                 </Badge>
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-bold" data-testid="text-event-title">
+            <h1 className="text-2xl sm:text-4xl font-bold leading-tight" data-testid="text-event-title">
               {event.title}
             </h1>
 
             <Link href={`/groups/${event.groupId}`}>
-              <Button variant="ghost" className="gap-2 -ml-2 text-muted-foreground" data-testid="link-group">
-                <Building2 className="h-4 w-4" />
+              <Button variant="ghost" className="gap-2 -ml-4 text-muted-foreground rounded-xl" data-testid="link-group">
                 {event.group.name}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
 
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="flex items-start gap-3">
-                  <Calendar className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+          <Card className="rounded-2xl border-0 shadow-sm">
+            <CardContent className="p-6 sm:p-8 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Calendar className="h-5 w-5 text-primary" />
+                  </div>
                   <div>
-                    <p className="font-medium">
+                    <p className="font-semibold">
                       {format(eventDate, "yyyy年M月d日(E)", { locale: ja })}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -155,36 +151,40 @@ export default function EventDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <MapPin className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                <div className="flex items-start gap-4">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <MapPin className="h-5 w-5 text-primary" />
+                  </div>
                   <div>
-                    <p className="font-medium">{event.location}</p>
+                    <p className="font-semibold">{event.location}</p>
                   </div>
                 </div>
 
                 {event.requirements && (
-                  <div className="flex items-start gap-3 sm:col-span-2">
-                    <Backpack className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                  <div className="flex items-start gap-4 sm:col-span-2">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Backpack className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">持ち物</p>
-                      <p className="font-medium">{event.requirements}</p>
+                      <p className="text-sm text-muted-foreground mb-1">持ち物</p>
+                      <p className="font-semibold">{event.requirements}</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              <Separator />
+              <div className="h-px bg-border" />
 
               <SoloFriendlinessBar level={event.soloFriendliness} />
 
               {event.atmosphereTags && event.atmosphereTags.length > 0 && (
                 <>
-                  <Separator />
-                  <div className="space-y-2">
+                  <div className="h-px bg-border" />
+                  <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">雰囲気</p>
                     <div className="flex flex-wrap gap-2">
                       {event.atmosphereTags.map((tag) => (
-                        <Badge key={tag} variant="outline">
+                        <Badge key={tag} variant="outline" className="rounded-lg border-muted-foreground/20">
                           {tag}
                         </Badge>
                       ))}
@@ -196,12 +196,12 @@ export default function EventDetailPage() {
           </Card>
 
           {event.description && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">イベント詳細</CardTitle>
+            <Card className="rounded-2xl border-0 shadow-sm">
+              <CardHeader className="p-6 sm:p-8 pb-0">
+                <CardTitle className="text-xl">イベント詳細</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              <CardContent className="p-6 sm:p-8 pt-4">
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {event.description}
                 </p>
               </CardContent>
@@ -209,31 +209,30 @@ export default function EventDetailPage() {
           )}
 
           {event.participationFlow && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">参加の流れ</CardTitle>
+            <Card className="rounded-2xl border-0 shadow-sm">
+              <CardHeader className="p-6 sm:p-8 pb-0">
+                <CardTitle className="text-xl">参加の流れ</CardTitle>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">
+              <CardContent className="p-6 sm:p-8 pt-4">
+                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {event.participationFlow}
                 </p>
               </CardContent>
             </Card>
           )}
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold">レビュー</h2>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold">レビュー</h2>
               {reviews && reviews.length > 0 && (
-                <Badge variant="secondary">{reviews.length}件</Badge>
+                <Badge variant="secondary" className="rounded-lg">{reviews.length}件</Badge>
               )}
             </div>
 
             {reviewsLoading ? (
               <div className="space-y-4">
-                <Skeleton className="h-32 w-full rounded-lg" />
-                <Skeleton className="h-32 w-full rounded-lg" />
+                <Skeleton className="h-36 w-full rounded-2xl" />
+                <Skeleton className="h-36 w-full rounded-2xl" />
               </div>
             ) : reviews && reviews.length > 0 ? (
               <div className="space-y-4">
@@ -242,14 +241,14 @@ export default function EventDetailPage() {
                 ))}
               </div>
             ) : (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <Star className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground">
+              <Card className="rounded-2xl border-0 shadow-sm">
+                <CardContent className="py-12 text-center">
+                  <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground font-medium">
                     まだレビューがありません
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    参加したら感想を投稿してみよう！
+                  <p className="text-sm text-muted-foreground mt-2">
+                    参加したら感想を投稿してみよう
                   </p>
                 </CardContent>
               </Card>

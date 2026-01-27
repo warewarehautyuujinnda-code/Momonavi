@@ -47,9 +47,8 @@ export function EventFiltersComponent({ filters, onFiltersChange }: EventFilters
       <div className="flex items-center justify-between gap-2">
         <Button
           variant="outline"
-          size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
-          className="gap-2"
+          className="gap-2 rounded-xl"
           data-testid="button-toggle-filters"
         >
           <Filter className="h-4 w-4" />
@@ -63,28 +62,27 @@ export function EventFiltersComponent({ filters, onFiltersChange }: EventFilters
         {hasActiveFilters && (
           <Button
             variant="ghost"
-            size="sm"
             onClick={clearFilters}
-            className="gap-1 text-muted-foreground"
+            className="gap-2 text-muted-foreground rounded-xl"
             data-testid="button-clear-filters"
           >
-            <X className="h-3 w-3" />
+            <X className="h-4 w-4" />
             クリア
           </Button>
         )}
       </div>
 
       {isExpanded && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/50 rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-6 bg-muted/40 rounded-2xl">
           <div className="space-y-2">
-            <Label className="text-sm">大学</Label>
+            <Label className="text-sm text-muted-foreground">大学</Label>
             <Select
               value={filters.university || "all"}
               onValueChange={(v) =>
                 onFiltersChange({ ...filters, university: v === "all" ? null : v })
               }
             >
-              <SelectTrigger data-testid="select-university">
+              <SelectTrigger className="rounded-xl" data-testid="select-university">
                 <SelectValue placeholder="すべて" />
               </SelectTrigger>
               <SelectContent>
@@ -99,14 +97,14 @@ export function EventFiltersComponent({ filters, onFiltersChange }: EventFilters
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">団体区分</Label>
+            <Label className="text-sm text-muted-foreground">団体区分</Label>
             <Select
               value={filters.category || "all"}
               onValueChange={(v) =>
                 onFiltersChange({ ...filters, category: v === "all" ? null : v })
               }
             >
-              <SelectTrigger data-testid="select-category">
+              <SelectTrigger className="rounded-xl" data-testid="select-category">
                 <SelectValue placeholder="すべて" />
               </SelectTrigger>
               <SelectContent>
@@ -121,14 +119,14 @@ export function EventFiltersComponent({ filters, onFiltersChange }: EventFilters
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm">ジャンル</Label>
+            <Label className="text-sm text-muted-foreground">ジャンル</Label>
             <Select
               value={filters.genre || "all"}
               onValueChange={(v) =>
                 onFiltersChange({ ...filters, genre: v === "all" ? null : v })
               }
             >
-              <SelectTrigger data-testid="select-genre">
+              <SelectTrigger className="rounded-xl" data-testid="select-genre">
                 <SelectValue placeholder="すべて" />
               </SelectTrigger>
               <SelectContent>
@@ -142,8 +140,8 @@ export function EventFiltersComponent({ filters, onFiltersChange }: EventFilters
             </Select>
           </div>
 
-          <div className="space-y-2">
-            <Label className="text-sm">
+          <div className="space-y-3">
+            <Label className="text-sm text-muted-foreground">
               1人参加しやすさ: {filters.minSoloFriendliness}以上
             </Label>
             <Slider

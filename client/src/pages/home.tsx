@@ -1,158 +1,138 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Layout } from "@/components/layout/layout";
-import { 
-  Sparkles, 
-  Search, 
-  Users, 
-  Calendar, 
-  Heart, 
-  ArrowRight,
-  Star,
-  CheckCircle2
-} from "lucide-react";
+import { ArrowRight, Users, MessageCircle, Sparkles } from "lucide-react";
+import heroImage from "@/assets/images/hero-students.jpg";
 
-const features = [
-  {
-    icon: Search,
-    title: "かんたん検索",
-    description: "大学・ジャンル・1人参加しやすさで絞り込み",
-  },
-  {
-    icon: Star,
-    title: "リアルな口コミ",
-    description: "先輩たちの体験談で雰囲気がわかる",
-  },
+const reasons = [
   {
     icon: Users,
-    title: "1人でも安心",
-    description: "1人参加しやすさ指標で不安を解消",
+    title: "1人でも大丈夫",
+    description: "「1人参加しやすさ」で安心度がわかる",
   },
   {
-    icon: Heart,
-    title: "初心者歓迎",
-    description: "未経験OKのイベントがひと目でわかる",
+    icon: MessageCircle,
+    title: "リアルな声",
+    description: "先輩たちの体験談が読める",
   },
-];
-
-const universities = [
-  "岡山大学",
-  "岡山理科大学", 
-  "ノートルダム清心女子大学",
+  {
+    icon: Sparkles,
+    title: "初心者歓迎",
+    description: "未経験OKが一目でわかる",
+  },
 ];
 
 export default function HomePage() {
   return (
     <Layout>
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 hero-gradient" />
-        <div className="container mx-auto px-4 py-16 sm:py-24 relative">
-          <div className="max-w-3xl mx-auto text-center space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium">
-              <Sparkles className="h-4 w-4" />
-              <span>岡山の大学新入生を応援</span>
-            </div>
+      <section className="relative min-h-[85vh] flex items-center">
+        <div 
+          className="absolute inset-0 bg-cover bg-center"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
+        
+        <div className="relative z-10 container-narrow py-20">
+          <div className="max-w-2xl space-y-8">
+            <p className="text-white/80 text-sm font-medium tracking-wide">
+              岡山の大学新入生へ
+            </p>
             
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
-              新しい出会いが、
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight">
+              最初の一歩を、
               <br />
-              <span className="gradient-text">あなたの新しい可能性</span>の
-              <br />
-              扉を開く
+              ここから。
             </h1>
             
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
-              部活やサークルの新歓イベントを探して、
-              大学生活を最高にスタートしよう！
+            <p className="text-xl text-white/90 leading-relaxed max-w-lg">
+              気になるサークル、見つけよう。
+              <br className="hidden sm:block" />
+              1人でも安心して参加できるイベントを探せます。
+            </p>
+            
+            <div className="pt-4">
+              <Link href="/events">
+                <Button 
+                  size="lg" 
+                  className="gap-3 text-lg px-8 py-6 rounded-2xl shadow-lg"
+                  data-testid="button-search-events"
+                >
+                  イベントを探す
+                  <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 sm:py-28">
+        <div className="container-narrow">
+          <div className="text-center mb-16">
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">
+              新歓ナビでできること
+            </h2>
+            <p className="text-muted-foreground">
+              不安を安心に変える3つの特徴
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-12">
+            {reasons.map((reason) => (
+              <div key={reason.title} className="text-center space-y-4">
+                <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+                  <reason.icon className="h-8 w-8 text-primary" />
+                </div>
+                <h3 className="text-lg font-semibold">{reason.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {reason.description}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 sm:py-28 bg-muted/40">
+        <div className="container-narrow">
+          <div className="max-w-2xl mx-auto text-center space-y-8">
+            <h2 className="text-2xl sm:text-3xl font-bold">
+              迷っているあなたへ
+            </h2>
+            <p className="text-muted-foreground text-lg leading-relaxed">
+              「1人で行くのは不安」「知らない人ばかりで緊張する」
+              <br className="hidden sm:block" />
+              その気持ち、みんな同じです。
+            </p>
+            <p className="text-foreground font-medium text-lg">
+              だからこそ、先輩たちの声を参考に、
+              <br className="hidden sm:block" />
+              自分に合ったイベントを見つけてみませんか？
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
               <Link href="/events">
-                <Button size="lg" className="gap-2 text-base w-full sm:w-auto" data-testid="button-search-events">
-                  <Calendar className="h-5 w-5" />
+                <Button 
+                  size="lg" 
+                  className="gap-2 rounded-2xl px-8"
+                  data-testid="button-find-events-cta"
+                >
                   イベントを探す
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <Link href="/groups">
-                <Button size="lg" variant="outline" className="gap-2 text-base w-full sm:w-auto" data-testid="button-search-groups">
-                  <Users className="h-5 w-5" />
+                <Button 
+                  size="lg" 
+                  variant="outline" 
+                  className="gap-2 rounded-2xl px-8"
+                  data-testid="button-search-groups"
+                >
                   団体を探す
                 </Button>
               </Link>
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-muted/30">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center mb-8">
-            新歓ナビの特徴
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature) => (
-              <Card key={feature.title} className="text-center">
-                <CardContent className="pt-6 space-y-3">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
-                    <feature.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <h3 className="font-semibold">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    {feature.description}
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-2xl font-bold text-center mb-8">
-            対象大学
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
-            {universities.map((uni) => (
-              <Link key={uni} href={`/events?university=${encodeURIComponent(uni)}`}>
-                <Card className="hover-elevate active-elevate-2 cursor-pointer">
-                  <CardContent className="py-6 flex items-center justify-center gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary" />
-                    <span className="font-medium">{uni}</span>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-16 bg-primary/5">
-        <div className="container mx-auto px-4 text-center space-y-6">
-          <h2 className="text-2xl font-bold">
-            不安を感じているあなたへ
-          </h2>
-          <div className="max-w-2xl mx-auto space-y-4 text-muted-foreground">
-            <p>
-              「1人で行くのは不安...」「初心者でも大丈夫かな...」
-            </p>
-            <p>
-              そんな気持ち、よくわかります。
-              新歓ナビでは、1人参加しやすさや初心者歓迎の情報、
-              先輩たちのリアルな口コミを見て、安心して参加できるイベントを探せます。
-            </p>
-            <p className="font-medium text-foreground">
-              最初の一歩を踏み出すお手伝いをします。
-            </p>
-          </div>
-          <Link href="/events">
-            <Button size="lg" className="gap-2 mt-4" data-testid="button-find-events-cta">
-              イベントを探してみる
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
         </div>
       </section>
     </Layout>

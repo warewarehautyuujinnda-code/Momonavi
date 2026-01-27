@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Separator } from "@/components/ui/separator";
 import {
   Accordion,
   AccordionContent,
@@ -17,10 +16,8 @@ import {
   ChevronLeft,
   Users,
   Calendar,
-  Sparkles,
   Clock,
   HelpCircle,
-  CalendarDays
 } from "lucide-react";
 import type { GroupWithEvents, EventWithGroup } from "@shared/schema";
 
@@ -58,10 +55,10 @@ export default function GroupDetailPage() {
   if (groupLoading) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-8 space-y-6">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-64 w-full rounded-lg" />
-          <Skeleton className="h-32 w-full rounded-lg" />
+        <div className="container-narrow py-10 space-y-8">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-64 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
         </div>
       </Layout>
     );
@@ -70,12 +67,12 @@ export default function GroupDetailPage() {
   if (!group) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-16 text-center">
-          <p className="text-lg text-muted-foreground">
+        <div className="container-narrow py-20 text-center">
+          <p className="text-lg text-muted-foreground mb-6">
             団体が見つかりませんでした
           </p>
           <Link href="/groups">
-            <Button variant="outline" className="mt-4 gap-2">
+            <Button variant="outline" className="gap-2 rounded-xl">
               <ChevronLeft className="h-4 w-4" />
               団体一覧に戻る
             </Button>
@@ -95,66 +92,71 @@ export default function GroupDetailPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="space-y-6">
+      <div className="container-narrow py-10 sm:py-14">
+        <div className="space-y-8">
           <Link href="/groups">
-            <Button variant="ghost" size="sm" className="gap-1 -ml-2" data-testid="button-back">
+            <Button variant="ghost" className="gap-2 -ml-4 rounded-xl" data-testid="button-back">
               <ChevronLeft className="h-4 w-4" />
               団体一覧
             </Button>
           </Link>
 
-          <div className="space-y-4">
+          <div className="space-y-5">
             <div className="flex flex-wrap gap-2">
-              <Badge variant="secondary">{group.university}</Badge>
-              <Badge variant="outline">{group.category}</Badge>
-              <Badge variant="outline">{group.genre}</Badge>
+              <Badge variant="secondary" className="rounded-lg">{group.university}</Badge>
+              <Badge variant="outline" className="rounded-lg border-muted-foreground/20">{group.category}</Badge>
+              <Badge variant="outline" className="rounded-lg border-muted-foreground/20">{group.genre}</Badge>
               {group.beginnerFriendly && (
-                <Badge className="bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">
-                  <Sparkles className="h-3 w-3 mr-1" />
+                <Badge className="bg-primary/10 text-primary border-0 rounded-lg">
                   初心者歓迎
                 </Badge>
               )}
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-bold" data-testid="text-group-name">
+            <h1 className="text-2xl sm:text-4xl font-bold leading-tight" data-testid="text-group-name">
               {group.name}
             </h1>
           </div>
 
-          <Card>
-            <CardContent className="pt-6 space-y-4">
-              <p className="leading-relaxed">{group.description}</p>
+          <Card className="rounded-2xl border-0 shadow-sm">
+            <CardContent className="p-6 sm:p-8 space-y-6">
+              <p className="text-lg leading-relaxed text-muted-foreground">{group.description}</p>
 
-              <Separator />
+              <div className="h-px bg-border" />
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                 {group.memberCount && (
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-primary" />
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
                       <p className="text-xs text-muted-foreground">部員数</p>
-                      <p className="font-medium">{group.memberCount}人</p>
+                      <p className="font-semibold">{group.memberCount}人</p>
                     </div>
                   </div>
                 )}
 
                 {group.foundedYear && (
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-primary" />
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
                       <p className="text-xs text-muted-foreground">設立</p>
-                      <p className="font-medium">{group.foundedYear}年</p>
+                      <p className="font-semibold">{group.foundedYear}年</p>
                     </div>
                   </div>
                 )}
 
                 {group.practiceSchedule && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="h-4 w-4 text-primary" />
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <Clock className="h-5 w-5 text-primary" />
+                    </div>
                     <div>
                       <p className="text-xs text-muted-foreground">活動日</p>
-                      <p className="font-medium">{group.practiceSchedule}</p>
+                      <p className="font-semibold">{group.practiceSchedule}</p>
                     </div>
                   </div>
                 )}
@@ -162,12 +164,12 @@ export default function GroupDetailPage() {
 
               {group.atmosphereTags && group.atmosphereTags.length > 0 && (
                 <>
-                  <Separator />
-                  <div className="space-y-2">
+                  <div className="h-px bg-border" />
+                  <div className="space-y-3">
                     <p className="text-sm text-muted-foreground">雰囲気</p>
                     <div className="flex flex-wrap gap-2">
                       {group.atmosphereTags.map((tag) => (
-                        <Badge key={tag} variant="outline">
+                        <Badge key={tag} variant="outline" className="rounded-lg border-muted-foreground/20">
                           {tag}
                         </Badge>
                       ))}
@@ -178,21 +180,23 @@ export default function GroupDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <HelpCircle className="h-5 w-5 text-primary" />
+          <Card className="rounded-2xl border-0 shadow-sm">
+            <CardHeader className="p-6 sm:p-8 pb-0">
+              <CardTitle className="text-xl flex items-center gap-3">
+                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <HelpCircle className="h-5 w-5 text-primary" />
+                </div>
                 よくある質問
               </CardTitle>
             </CardHeader>
-            <CardContent className="pt-0">
+            <CardContent className="p-6 sm:p-8 pt-4">
               <Accordion type="single" collapsible className="w-full">
                 {parsedFAQs.map((faq, index) => (
-                  <AccordionItem key={index} value={`faq-${index}`}>
-                    <AccordionTrigger className="text-left text-sm">
+                  <AccordionItem key={index} value={`faq-${index}`} className="border-b-0">
+                    <AccordionTrigger className="text-left hover:no-underline py-4">
                       {faq.question}
                     </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground">
+                    <AccordionContent className="text-muted-foreground pb-4">
                       {faq.answer}
                     </AccordionContent>
                   </AccordionItem>
@@ -201,34 +205,33 @@ export default function GroupDetailPage() {
             </CardContent>
           </Card>
 
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-bold">開催予定のイベント</h2>
+          <div className="space-y-6">
+            <div className="flex items-center gap-3">
+              <h2 className="text-2xl font-bold">開催予定イベント</h2>
               {upcomingEvents.length > 0 && (
-                <Badge variant="secondary">{upcomingEvents.length}件</Badge>
+                <Badge variant="secondary" className="rounded-lg">{upcomingEvents.length}件</Badge>
               )}
             </div>
 
             {eventsLoading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Skeleton className="h-48 rounded-lg" />
-                <Skeleton className="h-48 rounded-lg" />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <Skeleton className="h-56 rounded-2xl" />
+                <Skeleton className="h-56 rounded-2xl" />
               </div>
             ) : upcomingEvents.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {upcomingEvents.map((event) => (
                   <EventCard key={event.id} event={event} />
                 ))}
               </div>
             ) : (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <Calendar className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground">
+              <Card className="rounded-2xl border-0 shadow-sm">
+                <CardContent className="py-12 text-center">
+                  <Calendar className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
+                  <p className="text-muted-foreground font-medium">
                     現在予定されているイベントはありません
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-sm text-muted-foreground mt-2">
                     新しいイベントが追加されるのをお待ちください
                   </p>
                 </CardContent>

@@ -38,8 +38,8 @@ function StarInput({
   const [hover, setHover] = useState(0);
 
   return (
-    <div className="space-y-1.5">
-      <Label className="text-sm">{label}</Label>
+    <div className="space-y-2">
+      <Label className="text-sm text-muted-foreground">{label}</Label>
       <div className="flex gap-1">
         {[1, 2, 3, 4, 5].map((i) => (
           <button
@@ -48,14 +48,14 @@ function StarInput({
             onMouseEnter={() => setHover(i)}
             onMouseLeave={() => setHover(0)}
             onClick={() => onChange(i)}
-            className="p-0.5 hover-elevate rounded"
+            className="p-1 hover-elevate rounded-lg"
             data-testid={`star-${label}-${i}`}
           >
             <Star
-              className={`h-6 w-6 transition-colors ${
+              className={`h-7 w-7 transition-colors ${
                 i <= (hover || value)
-                  ? "text-yellow-500 fill-yellow-500"
-                  : "text-muted"
+                  ? "text-primary fill-primary"
+                  : "text-muted/40"
               }`}
             />
           </button>
@@ -114,32 +114,33 @@ export function ReviewForm({ eventId }: ReviewFormProps) {
   };
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg">レビューを投稿する</CardTitle>
+    <Card className="rounded-2xl border-0 shadow-sm">
+      <CardHeader className="p-6 sm:p-8 pb-0">
+        <CardTitle className="text-xl">レビューを投稿</CardTitle>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="p-3 bg-yellow-500/10 rounded-lg flex items-start gap-2 text-sm">
-            <AlertTriangle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 shrink-0 mt-0.5" />
-            <p className="text-yellow-800 dark:text-yellow-200">
+      <CardContent className="p-6 sm:p-8 pt-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="p-4 bg-muted rounded-xl flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+            <p className="text-sm text-muted-foreground">
               個人情報（本名、電話番号、住所など）は絶対に書かないでください。
             </p>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="nickname" className="text-sm">
+          <div className="space-y-2">
+            <Label htmlFor="nickname" className="text-sm text-muted-foreground">
               ニックネーム（任意）
             </Label>
             <Input
               id="nickname"
               placeholder="匿名で投稿されます"
+              className="rounded-xl"
               {...form.register("nickname")}
               data-testid="input-nickname"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
             <StarInput
               value={form.watch("rating")}
               onChange={(v) => form.setValue("rating", v)}
@@ -157,19 +158,20 @@ export function ReviewForm({ eventId }: ReviewFormProps) {
             />
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="content" className="text-sm">
+          <div className="space-y-2">
+            <Label htmlFor="content" className="text-sm text-muted-foreground">
               レビュー内容
             </Label>
             <Textarea
               id="content"
               placeholder="イベントの感想を教えてください（10〜500文字）"
               rows={4}
+              className="rounded-xl resize-none"
               {...form.register("content")}
               data-testid="textarea-review-content"
             />
             {form.formState.errors.content && (
-              <p className="text-xs text-destructive">
+              <p className="text-sm text-destructive">
                 {form.formState.errors.content.message}
               </p>
             )}
@@ -177,7 +179,8 @@ export function ReviewForm({ eventId }: ReviewFormProps) {
 
           <Button
             type="submit"
-            className="w-full gap-2"
+            size="lg"
+            className="w-full gap-2 rounded-xl"
             disabled={mutation.isPending}
             data-testid="button-submit-review"
           >

@@ -2,52 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
-/* LIGHT MODE - Fresh, modern, exciting for students */
+/* LIGHT MODE - Clean, minimal, elegant */
 :root {
-  --button-outline: rgba(0,0,0, .10);
-  --badge-outline: rgba(0,0,0, .05);
+  --button-outline: rgba(0,0,0, .08);
+  --badge-outline: rgba(0,0,0, .04);
 
   --opaque-button-border-intensity: -8;
 
-  --elevate-1: rgba(0,0,0, .03);
-  --elevate-2: rgba(0,0,0, .08);
+  --elevate-1: rgba(0,0,0, .02);
+  --elevate-2: rgba(0,0,0, .05);
 
-  --background: 0 0% 100%;
-  --foreground: 222 47% 11%;
+  --background: 0 0% 99%;
+  --foreground: 220 20% 20%;
 
-  --border: 220 13% 91%;
+  --border: 220 10% 92%;
 
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
-  --card-border: 220 13% 91%;
+  --card-foreground: 220 20% 20%;
+  --card-border: 220 10% 92%;
 
-  --sidebar: 210 40% 98%;
-  --sidebar-foreground: 222 47% 11%;
-  --sidebar-border: 220 13% 91%;
-  --sidebar-primary: 262 83% 58%;
+  --sidebar: 0 0% 98%;
+  --sidebar-foreground: 220 20% 20%;
+  --sidebar-border: 220 10% 92%;
+  --sidebar-primary: 262 70% 55%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 262 83% 95%;
-  --sidebar-accent-foreground: 262 83% 40%;
-  --sidebar-ring: 262 83% 58%;
+  --sidebar-accent: 262 50% 96%;
+  --sidebar-accent-foreground: 262 70% 40%;
+  --sidebar-ring: 262 70% 55%;
 
   --popover: 0 0% 100%;
-  --popover-foreground: 222 47% 11%;
-  --popover-border: 220 13% 91%;
+  --popover-foreground: 220 20% 20%;
+  --popover-border: 220 10% 92%;
 
-  /* Primary: Vibrant purple - exciting, youthful */
-  --primary: 262 83% 58%;
+  /* Primary: Refined purple - single accent color */
+  --primary: 262 70% 55%;
   --primary-foreground: 0 0% 100%;
 
-  /* Secondary: Soft gray */
-  --secondary: 220 14% 96%;
-  --secondary-foreground: 222 47% 11%;
+  /* Secondary: Very light gray */
+  --secondary: 220 10% 97%;
+  --secondary-foreground: 220 20% 25%;
 
   /* Muted: Subtle backgrounds */
-  --muted: 220 14% 96%;
-  --muted-foreground: 220 9% 46%;
+  --muted: 220 10% 96%;
+  --muted-foreground: 220 10% 50%;
 
-  /* Accent: Warm coral/orange for CTAs */
-  --accent: 24 95% 53%;
+  /* Accent: Same as primary for consistency */
+  --accent: 262 70% 55%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 84% 60%;
@@ -56,16 +56,16 @@
   --input: 220 13% 91%;
   --ring: 262 83% 58%;
 
-  --chart-1: 262 83% 58%;
-  --chart-2: 24 95% 53%;
-  --chart-3: 142 76% 36%;
-  --chart-4: 199 89% 48%;
-  --chart-5: 43 96% 56%;
+  --chart-1: 262 70% 55%;
+  --chart-2: 262 50% 70%;
+  --chart-3: 262 40% 45%;
+  --chart-4: 262 60% 65%;
+  --chart-5: 262 30% 80%;
 
-  --font-sans: 'Inter', 'Noto Sans JP', sans-serif;
+  --font-sans: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
-  --radius: .5rem;
+  --radius: 1rem;
   --shadow-2xs: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
   --shadow-xs: 0 1px 3px 0 rgba(0, 0, 0, 0.04);
   --shadow-sm: 0 2px 4px -1px rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
@@ -130,16 +130,16 @@
   --popover-foreground: 210 40% 98%;
   --popover-border: 217 33% 17%;
 
-  --primary: 262 83% 65%;
+  --primary: 262 70% 60%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 217 33% 17%;
+  --secondary: 217 25% 18%;
   --secondary-foreground: 210 40% 98%;
 
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
+  --muted: 217 25% 18%;
+  --muted-foreground: 215 15% 60%;
 
-  --accent: 24 95% 58%;
+  --accent: 262 70% 60%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 62% 50%;
@@ -248,10 +248,14 @@
 
   .gradient-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(24 95% 53%) 100%);
+    background-image: linear-gradient(135deg, hsl(262 70% 55%) 0%, hsl(262 50% 65%) 100%);
   }
 
   .hero-gradient {
-    background: linear-gradient(135deg, hsl(262 83% 58% / 0.1) 0%, hsl(24 95% 53% / 0.1) 100%);
+    background: linear-gradient(180deg, hsl(262 70% 55% / 0.03) 0%, hsl(262 50% 65% / 0.06) 100%);
+  }
+
+  .container-narrow {
+    @apply max-w-5xl mx-auto px-5 sm:px-6;
   }
 }

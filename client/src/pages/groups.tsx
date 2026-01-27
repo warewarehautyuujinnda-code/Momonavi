@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Users, Filter, X, SearchX } from "lucide-react";
+import { Filter, X, SearchX } from "lucide-react";
 import { universities, groupCategories, genres } from "@shared/schema";
 import type { GroupWithEvents } from "@shared/schema";
 
@@ -63,14 +63,13 @@ export default function GroupsPage() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-8">
-        <div className="space-y-6">
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Users className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-bold">団体を探す</h1>
-            </div>
-            <p className="text-muted-foreground">
+      <div className="container-narrow py-10 sm:py-14">
+        <div className="space-y-10">
+          <div className="space-y-3">
+            <h1 className="text-3xl sm:text-4xl font-bold">
+              団体を探す
+            </h1>
+            <p className="text-muted-foreground text-lg">
               気になる部活・サークルを見つけよう
             </p>
           </div>
@@ -79,9 +78,8 @@ export default function GroupsPage() {
             <div className="flex items-center justify-between gap-2">
               <Button
                 variant="outline"
-                size="sm"
                 onClick={() => setShowFilters(!showFilters)}
-                className="gap-2"
+                className="gap-2 rounded-xl"
                 data-testid="button-toggle-filters"
               >
                 <Filter className="h-4 w-4" />
@@ -95,28 +93,27 @@ export default function GroupsPage() {
               {hasActiveFilters && (
                 <Button
                   variant="ghost"
-                  size="sm"
                   onClick={clearFilters}
-                  className="gap-1 text-muted-foreground"
+                  className="gap-2 text-muted-foreground rounded-xl"
                   data-testid="button-clear-filters"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                   クリア
                 </Button>
               )}
             </div>
 
             {showFilters && (
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 p-6 bg-muted/40 rounded-2xl">
                 <div className="space-y-2">
-                  <Label className="text-sm">大学</Label>
+                  <Label className="text-sm text-muted-foreground">大学</Label>
                   <Select
                     value={filters.university || "all"}
                     onValueChange={(v) =>
                       setFilters({ ...filters, university: v === "all" ? null : v })
                     }
                   >
-                    <SelectTrigger data-testid="select-university">
+                    <SelectTrigger className="rounded-xl" data-testid="select-university">
                       <SelectValue placeholder="すべて" />
                     </SelectTrigger>
                     <SelectContent>
@@ -131,14 +128,14 @@ export default function GroupsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm">団体区分</Label>
+                  <Label className="text-sm text-muted-foreground">団体区分</Label>
                   <Select
                     value={filters.category || "all"}
                     onValueChange={(v) =>
                       setFilters({ ...filters, category: v === "all" ? null : v })
                     }
                   >
-                    <SelectTrigger data-testid="select-category">
+                    <SelectTrigger className="rounded-xl" data-testid="select-category">
                       <SelectValue placeholder="すべて" />
                     </SelectTrigger>
                     <SelectContent>
@@ -153,14 +150,14 @@ export default function GroupsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm">ジャンル</Label>
+                  <Label className="text-sm text-muted-foreground">ジャンル</Label>
                   <Select
                     value={filters.genre || "all"}
                     onValueChange={(v) =>
                       setFilters({ ...filters, genre: v === "all" ? null : v })
                     }
                   >
-                    <SelectTrigger data-testid="select-genre">
+                    <SelectTrigger className="rounded-xl" data-testid="select-genre">
                       <SelectValue placeholder="すべて" />
                     </SelectTrigger>
                     <SelectContent>
@@ -178,34 +175,34 @@ export default function GroupsPage() {
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
-                <Skeleton key={i} className="h-48 rounded-lg" />
+                <Skeleton key={i} className="h-56 rounded-2xl" />
               ))}
             </div>
           ) : filteredGroups.length === 0 ? (
-            <div className="text-center py-16 space-y-4">
-              <SearchX className="h-12 w-12 text-muted-foreground mx-auto" />
+            <div className="text-center py-20 space-y-4">
+              <SearchX className="h-12 w-12 text-muted-foreground/50 mx-auto" />
               <div className="space-y-2">
                 <p className="text-lg font-medium">
-                  該当する団体が見つかりませんでした
+                  該当する団体がありません
                 </p>
                 <p className="text-muted-foreground">
-                  フィルター条件を変更してみてください
+                  条件を変えて探してみてください
                 </p>
               </div>
             </div>
           ) : (
-            <>
+            <div className="space-y-6">
               <p className="text-sm text-muted-foreground">
-                {filteredGroups.length}件の団体が見つかりました
+                {filteredGroups.length}件の団体
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredGroups.map((group) => (
                   <GroupCard key={group.id} group={group} />
                 ))}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
