@@ -13,7 +13,7 @@ const reasons = [
   {
     icon: MessageCircle,
     title: "実際に行った人の声が見られる",
-    description: "先輩たちのリアルな体験談を参考にできます",
+    description: "経験者たちのリアルな体験談を参考にできます",
   },
   {
     icon: MapPin,
@@ -107,7 +107,7 @@ export default function HomePage() {
               その気持ち、みんな同じです。
             </p>
             <p className="text-foreground font-medium text-lg">
-              だからこそ、先輩たちの声を参考に、
+              だからこそ、経験者たちの声を参考に、
               <br className="hidden sm:block" />
               自分に合ったイベントを見つけてみませんか？
             </p>
