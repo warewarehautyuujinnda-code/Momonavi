@@ -25,10 +25,15 @@ client/src/
 │   ├── events.tsx         # イベント検索
 │   ├── event-detail.tsx   # イベント詳細
 │   ├── groups.tsx         # 団体検索
-│   └── group-detail.tsx   # 団体詳細
+│   ├── group-detail.tsx   # 団体詳細
+│   ├── buddies.tsx        # 仲間を探す（LINE誘導）
+│   ├── articles.tsx       # 記事一覧
+│   ├── article-detail.tsx # 記事詳細
+│   └── contact.tsx        # お問い合わせ（フォーム + FAQ）
 ├── components/
 │   ├── layout/
-│   │   ├── header.tsx
+│   │   ├── header.tsx     # 5項目ナビ + モバイル対応
+│   │   ├── footer.tsx     # サイト公式リンク（Instagram/Notion）
 │   │   └── layout.tsx
 │   ├── events/
 │   │   ├── event-card.tsx
@@ -38,7 +43,7 @@ client/src/
 │   └── groups/
 │       └── group-card.tsx
 shared/
-└── schema.ts              # 共通型定義（Group, Event, Review等）
+└── schema.ts              # 共通型定義（Group, Event, Review, Article, ContactSubmission等）
 server/
 ├── routes.ts              # APIルート
 └── storage.ts             # データストレージ + サンプルデータ
@@ -58,6 +63,13 @@ server/
 - `GET /api/groups/:id/events` - 団体のイベント取得
 - `GET /api/groups/:id/reviews` - 団体のレビュー取得
 
+### Articles
+- `GET /api/articles` - 全記事取得
+- `GET /api/articles/:id` - 記事詳細取得
+
+### Contact
+- `POST /api/contact` - お問い合わせ送信
+
 ## データモデル
 
 ### Group（団体）
@@ -65,6 +77,7 @@ server/
 - 雰囲気タグ、初心者歓迎フラグ
 - 部員数、設立年、活動日
 - よくある質問（FAQ）
+- 外部リンク（instagramUrl, twitterUrl, lineUrl）
 
 ### Event（イベント）
 - 開催日時、場所、持ち物
@@ -77,14 +90,34 @@ server/
 - 総合評価、1人参加しやすさ評価、雰囲気評価
 - レビュー本文
 
+### Article（記事）
+- タイトル、要約、本文
+- カテゴリ（あるある/想い）
+- タグ、公開日
+
+### ContactSubmission（お問い合わせ）
+- 種別（一般/イベント掲載依頼/不具合報告/その他）
+- 名前、大学、連絡先、内容
+- イベント情報（掲載依頼時）
+
 ## 主要機能
 
 ### MVP（実装済み）
-1. トップページ - キャッチコピー + イベント検索への導線
+1. トップページ - キャッチコピー「新しい出会いが、あなたの新しい可能性の扉を開く」+ 安心の3要素 + イベント検索への導線
 2. イベント検索 - 大学/団体区分/ジャンル/1人参加しやすさでフィルター
 3. イベント詳細 - 情報表示 + レビュー閲覧・投稿
 4. 団体検索 - フィルター機能付き
-5. 団体詳細 - 基本情報 + FAQ + 関連イベント
+5. 団体詳細 - 基本情報 + FAQ + 関連イベント + 外部リンク（Instagram/X/LINE）
+6. 仲間を探す - 公式LINE誘導 + 安全ガイドライン
+7. 記事 - あるある/想い の2カテゴリ、一覧・詳細ページ
+8. お問い合わせ - フォーム（種別選択）+ FAQ accordion
+
+### グローバルナビゲーション（5項目）
+1. イベント情報 (/events)
+2. 団体紹介 (/groups)
+3. 仲間を探す (/buddies)
+4. 記事 (/articles)
+5. お問い合わせ (/contact)
 
 ### 今後追加予定
 - 同行募集掲示板
@@ -96,13 +129,18 @@ server/
 
 ### カラースキーム
 - Primary: 紫 (262 83% 58%) - ワクワク感、若々しさ
-- Accent: オレンジ (24 95% 53%) - CTAボタン
+- 全体を紫のトーンで統一（星評価も紫色）
 - モダンでクリーン、学生目線のUI
 
 ### モバイルファースト
 - スマホ利用がメイン想定
 - 片手操作、読みやすさ重視
 - レスポンシブデザイン対応
+- モバイルメニュー（ハンバーガー）対応
+
+### コンポーネントスタイル
+- rounded-2xl, shadow-sm を基本としたカードデザイン
+- container-narrow でコンテンツ幅を制限
 
 ## 荒らし対策
 - URL・スパムパターンの検出
@@ -113,3 +151,11 @@ server/
 - フロントエンドは0.0.0.0:5000でサーブ
 - TanStack Query v5使用（オブジェクト形式のquery関数）
 - apiRequestは (method, url, data) の形式
+- 外部リンクはrel="noopener noreferrer"で安全に開く
+
+## 最近の変更（2026年1月）
+- 5項目ナビゲーションに拡張
+- 仲間を探す、記事、お問い合わせページを追加
+- ホームページのキャッチコピーを刷新
+- 団体詳細に外部SNSリンク表示を追加
+- フッターにサイト公式リンクを追加
