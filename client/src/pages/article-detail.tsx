@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Layout } from "@/components/layout/layout";
@@ -62,6 +63,10 @@ function ArticleContent({ content }: { content: string }) {
 export default function ArticleDetailPage() {
   const [, params] = useRoute("/articles/:id");
   const articleId = params?.id;
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [articleId]);
 
   const { data: article, isLoading } = useQuery<Article>({
     queryKey: ["/api/articles", articleId],
