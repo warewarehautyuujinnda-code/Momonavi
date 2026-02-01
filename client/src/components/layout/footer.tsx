@@ -54,7 +54,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t text-center text-sm text-muted-foreground">
-          <p>&copy; 2024 新歓ナビ. All rights reserved.</p>
+          <p>© 2025 新歓ナビ. All rights reserved.</p>
         </div>
       </div>
     </footer>
