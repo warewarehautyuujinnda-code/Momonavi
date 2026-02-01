@@ -138,7 +138,9 @@ export function ReviewSection({ reviews }: ReviewSectionProps) {
 
   const handleRatingSelect = (rating: number | null) => {
     setSelectedRating(rating);
-    setDisplayCount(3);
+    if (rating !== null) {
+      setDisplayCount(3);
+    }
   };
 
   if (reviews.length === 0) {
