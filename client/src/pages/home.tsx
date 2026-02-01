@@ -39,9 +39,7 @@ export default function HomePage() {
             </p>
             
             <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
-              新しい出会いが、
-              <br />
-              あなたの新しい可能性の扉を開く
+              新しい出会いがあなたの可能性を広げる
             </h1>
             
             <p className="text-lg sm:text-xl text-white/90 leading-relaxed max-w-lg">
