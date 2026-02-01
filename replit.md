@@ -11,10 +11,10 @@
 ## 技術スタック
 - **Frontend**: React + TypeScript + Tailwind CSS + shadcn/ui
 - **Backend**: Express.js + TypeScript
+- **Database**: PostgreSQL + Drizzle ORM
 - **State Management**: TanStack Query
 - **Routing**: wouter
 - **Validation**: Zod + drizzle-zod
-- **Storage**: In-memory (MemStorage)
 
 ## プロジェクト構成
 
@@ -45,8 +45,10 @@ client/src/
 shared/
 └── schema.ts              # 共通型定義（Group, Event, Review, Article, ContactSubmission等）
 server/
+├── db.ts                  # データベース接続
 ├── routes.ts              # APIルート
-└── storage.ts             # データストレージ + サンプルデータ
+├── seed.ts                # 初期データ投入スクリプト
+└── storage.ts             # データベースストレージ
 ```
 
 ## API エンドポイント
@@ -152,6 +154,12 @@ server/
 - TanStack Query v5使用（オブジェクト形式のquery関数）
 - apiRequestは (method, url, data) の形式
 - 外部リンクはrel="noopener noreferrer"で安全に開く
+
+## 最近の変更（2026年2月）
+- PostgreSQLデータベースに移行（データの永続的保存）
+- server/db.ts: データベース接続設定
+- server/seed.ts: 初期データ投入スクリプト
+- server/storage.ts: DatabaseStorageクラスでDB操作
 
 ## 最近の変更（2026年1月）
 - 5項目ナビゲーションに拡張
