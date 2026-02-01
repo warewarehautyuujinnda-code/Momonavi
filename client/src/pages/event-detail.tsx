@@ -1,7 +1,7 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/layout";
-import { ReviewCard } from "@/components/events/review-card";
+import { ReviewSection } from "@/components/events/review-section";
 import { ReviewForm } from "@/components/events/review-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,8 +13,7 @@ import {
   Users, 
   ChevronLeft,
   Backpack,
-  ArrowRight,
-  Star
+  ArrowRight
 } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
@@ -234,24 +233,8 @@ export default function EventDetailPage() {
                 <Skeleton className="h-36 w-full rounded-2xl" />
                 <Skeleton className="h-36 w-full rounded-2xl" />
               </div>
-            ) : reviews && reviews.length > 0 ? (
-              <div className="space-y-4">
-                {reviews.map((review) => (
-                  <ReviewCard key={review.id} review={review} />
-                ))}
-              </div>
             ) : (
-              <Card className="rounded-2xl border-0 shadow-sm">
-                <CardContent className="py-12 text-center">
-                  <Star className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
-                  <p className="text-muted-foreground font-medium">
-                    まだレビューがありません
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    参加したら感想を投稿してみよう
-                  </p>
-                </CardContent>
-              </Card>
+              <ReviewSection reviews={reviews || []} />
             )}
 
             <ReviewForm eventId={id!} />
