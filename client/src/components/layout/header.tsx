@@ -20,7 +20,7 @@ export function Header() {
       <div className="container-narrow">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 hover-elevate rounded-xl px-3 py-2 -mx-3" data-testid="link-home">
-            <span className="font-bold text-xl tracking-tight text-primary">HOME</span>
+            <span className="font-bold text-xl tracking-tight text-primary">岡山新歓ナビ</span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
