@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
+import { getNotionClient, extractDatabaseId, testDatabaseConnection } from "./notion";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -170,6 +171,49 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error fetching article:", error);
       res.status(500).json({ error: "Failed to fetch article" });
+    }
+  });
+
+  // Test Notion connection
+  app.get("/api/notion/test", async (req, res) => {
+    try {
+      const results: Record<string, any> = {};
+      
+      // Test Events database
+      const eventUrl = process.env.NOTION_EVENT_URL;
+      if (eventUrl) {
+        const eventDbId = extractDatabaseId(eventUrl);
+        results.events = await testDatabaseConnection(eventDbId);
+        results.events.databaseId = eventDbId;
+      } else {
+        results.events = { success: false, error: "NOTION_EVENT_URL not set" };
+      }
+      
+      // Test Groups database
+      const groupUrl = process.env.NOTION_CIRCLENAME_URL;
+      if (groupUrl) {
+        const groupDbId = extractDatabaseId(groupUrl);
+        results.groups = await testDatabaseConnection(groupDbId);
+        results.groups.databaseId = groupDbId;
+      } else {
+        results.groups = { success: false, error: "NOTION_CIRCLENAME_URL not set" };
+      }
+      
+      // Test Contact database
+      const contactUrl = process.env.NOTION_CONTACT_URL;
+      if (contactUrl) {
+        const contactDbId = extractDatabaseId(contactUrl);
+        results.contacts = await testDatabaseConnection(contactDbId);
+        results.contacts.databaseId = contactDbId;
+      } else {
+        results.contacts = { success: false, error: "NOTION_CONTACT_URL not set" };
+      }
+      
+      const allSuccess = results.events?.success && results.groups?.success && results.contacts?.success;
+      res.json({ success: allSuccess, databases: results });
+    } catch (error: any) {
+      console.error("Notion test error:", error);
+      res.status(500).json({ success: false, error: error.message });
     }
   });
 
