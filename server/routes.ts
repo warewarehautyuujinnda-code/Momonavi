@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { getNotionClient, extractDatabaseId, testDatabaseConnection } from "./notion";
+import { syncAllFromNotion, syncGroupsFromNotion, syncEventsFromNotion, writeContactToNotion } from "./notion-sync";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -174,6 +175,54 @@ export async function registerRoutes(
     }
   });
 
+  // Simple auth middleware for admin endpoints
+  const adminAuth = (req: any, res: any, next: any) => {
+    const authHeader = req.headers["x-admin-key"];
+    const adminKey = process.env.SESSION_SECRET;
+    if (!adminKey || authHeader !== adminKey) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    next();
+  };
+
+  // Sync all data from Notion (requires auth)
+  app.post("/api/notion/sync", adminAuth, async (req, res) => {
+    try {
+      console.log("Starting full Notion sync...");
+      const result = await syncAllFromNotion();
+      res.json({
+        success: true,
+        message: "Sync completed",
+        results: result,
+      });
+    } catch (error: any) {
+      console.error("Notion sync error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Sync groups from Notion (requires auth)
+  app.post("/api/notion/sync/groups", adminAuth, async (req, res) => {
+    try {
+      const result = await syncGroupsFromNotion();
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      console.error("Notion groups sync error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Sync events from Notion (requires auth)
+  app.post("/api/notion/sync/events", adminAuth, async (req, res) => {
+    try {
+      const result = await syncEventsFromNotion();
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      console.error("Notion events sync error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
   // Test Notion connection
   app.get("/api/notion/test", async (req, res) => {
     try {
@@ -248,7 +297,24 @@ export async function registerRoutes(
         eventImageUrl: validatedData.eventImageUrl || null,
       });
 
-      res.status(201).json({ success: true, id: submission.id });
+      // Also write to Notion
+      const notionResult = await writeContactToNotion({
+        type: validatedData.type,
+        name: validatedData.name || null,
+        university: validatedData.university || null,
+        contactMethod: validatedData.contactMethod,
+        content: validatedData.content,
+        eventName: validatedData.eventName,
+        eventDate: validatedData.eventDate,
+        eventLocation: validatedData.eventLocation,
+        eventDescription: validatedData.eventDescription,
+      });
+
+      if (!notionResult.success) {
+        console.warn("Failed to write contact to Notion:", notionResult.error);
+      }
+
+      res.status(201).json({ success: true, id: submission.id, notionSync: notionResult.success });
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: "Invalid input", details: error.errors });

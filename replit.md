@@ -155,7 +155,51 @@ server/
 - apiRequestは (method, url, data) の形式
 - 外部リンクはrel="noopener noreferrer"で安全に開く
 
+## Notion連携
+
+### 概要
+Notionをメインのデータソースとし、PostgreSQLをキャッシュとして使用。
+
+### 環境変数
+- `NOTION_EVENT_URL` - イベントDBのURL
+- `NOTION_CIRCLENAME_URL` - 団体DBのURL
+- `NOTION_CONTACT_URL` - お問い合わせDBのURL
+
+### Notionデータベースの必須プロパティ
+
+**イベントDB**
+- イベント名 (Title)
+- 団体ID (Text/Relation) - 団体DBのIDを設定
+- 日時 (Date) - 必須、日付型で設定
+- 場所 (Text)
+- 説明 (Text)
+- 持ち物 (Text)
+- 初心者歓迎 (Checkbox)
+- １人参加しやすさ (Number, 1-5)
+
+**団体DB**
+- 名前 (Title)
+- 大学 (Select)
+- 区分 (Select) - 部活/サークル
+- ジャンル (Select)
+- 説明 (Text)
+- 部員数 (Number)
+- 活動日 (Text)
+- Instagram/Twitter/LINE (URL)
+
+### 同期API（認証必要）
+- `POST /api/notion/sync` - 全データ同期
+- `POST /api/notion/sync/groups` - 団体のみ同期
+- `POST /api/notion/sync/events` - イベントのみ同期
+- `GET /api/notion/test` - 接続テスト
+
+認証: `X-Admin-Key` ヘッダーに `SESSION_SECRET` の値を設定
+
+### お問い合わせ
+Webフォームから送信されると自動でNotionのお問い合わせDBに追加される
+
 ## 最近の変更（2026年2月）
+- Notion連携機能を追加（server/notion.ts, server/notion-sync.ts）
 - PostgreSQLデータベースに移行（データの永続的保存）
 - server/db.ts: データベース接続設定
 - server/seed.ts: 初期データ投入スクリプト
