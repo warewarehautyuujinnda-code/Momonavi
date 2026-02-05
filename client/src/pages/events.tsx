@@ -5,6 +5,7 @@ import { Layout } from "@/components/layout/layout";
 import { EventCard } from "@/components/events/event-card";
 import { EventFiltersComponent, type EventFilters } from "@/components/events/event-filters";
 import { MasonryGrid } from "@/components/ui/masonry-grid";
+import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchX } from "lucide-react";
 import type { EventWithGroup } from "@shared/schema";
@@ -58,8 +59,9 @@ export default function EventsPage() {
 
   return (
     <Layout>
-      <div className="container-narrow py-10 sm:py-14">
-        <div className="space-y-10">
+      <div className="container-narrow py-10 sm:py-14 relative overflow-hidden">
+        <SakuraPetals position="top-right" opacity={0.35} size="md" />
+        <div className="space-y-10 relative z-10">
           <div className="space-y-3 pb-6 border-b">
             <h1 className="text-3xl sm:text-4xl font-bold">
               イベントを探す

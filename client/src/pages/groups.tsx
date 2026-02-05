@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/layout";
 import { GroupCard } from "@/components/groups/group-card";
 import { MasonryGrid } from "@/components/ui/masonry-grid";
+import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -74,8 +75,9 @@ export default function GroupsPage() {
 
   return (
     <Layout>
-      <div className="container-narrow py-10 sm:py-14">
-        <div className="space-y-10">
+      <div className="container-narrow py-10 sm:py-14 relative overflow-hidden">
+        <SakuraPetals position="top-left" opacity={0.35} size="md" />
+        <div className="space-y-10 relative z-10">
           <div className="space-y-3 pb-6 border-b">
             <h1 className="text-3xl sm:text-4xl font-bold">
               団体を探す

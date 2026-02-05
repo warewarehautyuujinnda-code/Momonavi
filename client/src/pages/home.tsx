@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
+import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { ArrowRight, Users, MessageCircle, MapPin } from "lucide-react";
 import heroImage from "@/assets/images/hero-students.jpg";
 
@@ -80,8 +81,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 sm:py-28">
-        <div className="container-narrow">
+      <section className="py-20 sm:py-28 relative overflow-hidden">
+        <SakuraPetals position="both-top" opacity={0.4} size="lg" />
+        <div className="container-narrow relative z-10">
           <div className="text-center mb-16">
             <h2 
               className="text-2xl sm:text-3xl font-bold font-rounded"
@@ -116,8 +118,9 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="py-20 sm:py-28 bg-muted/40">
-        <div className="container-narrow">
+      <section className="py-20 sm:py-28 bg-muted/40 relative overflow-hidden">
+        <SakuraPetals position="bottom-right" opacity={0.3} size="md" />
+        <div className="container-narrow relative z-10">
           <div className="max-w-2xl mx-auto text-center space-y-8">
             <h2 
               className="text-2xl sm:text-3xl font-bold font-rounded"

@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/layout";
+import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -190,8 +191,9 @@ export default function ContactPage() {
 
   return (
     <Layout>
-      <div className="container-narrow py-12 sm:py-16 space-y-12">
-        <div className="text-center space-y-4">
+      <div className="container-narrow py-12 sm:py-16 space-y-12 relative overflow-hidden">
+        <SakuraPetals position="top-left" opacity={0.35} size="md" />
+        <div className="text-center space-y-4 pb-6 border-b relative z-10">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">お問い合わせ</h1>
           <p className="text-lg text-muted-foreground">
             ご質問やイベント掲載のご依頼はこちらから

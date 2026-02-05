@@ -1,4 +1,5 @@
 import { Layout } from "@/components/layout/layout";
+import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Heart, AlertTriangle, MessageCircle, ExternalLink } from "lucide-react";
@@ -6,8 +7,9 @@ import { Shield, Heart, AlertTriangle, MessageCircle, ExternalLink } from "lucid
 export default function BuddiesPage() {
   return (
     <Layout>
-      <div className="container-narrow py-12 sm:py-16 space-y-12">
-        <div className="text-center space-y-4 pb-6 border-b">
+      <div className="container-narrow py-12 sm:py-16 space-y-12 relative overflow-hidden">
+        <SakuraPetals position="both-top" opacity={0.35} size="md" />
+        <div className="text-center space-y-4 pb-6 border-b relative z-10">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
             1人が不安なら、仲間を探そう
           </h1>
