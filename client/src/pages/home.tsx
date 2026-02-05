@@ -34,20 +34,37 @@ export default function HomePage() {
         
         <div className="relative z-10 container-narrow py-20">
           <div className="max-w-2xl space-y-8">
-            <p className="text-white/80 text-sm font-medium tracking-wide">
+            <p 
+              className="text-white/80 text-sm font-medium tracking-wide"
+              data-reveal="stagger"
+              data-reveal-stagger="40"
+            >
               岡山の大学新入生へ
             </p>
             
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight">
+            <h1 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight font-rounded"
+              data-reveal="stagger"
+              data-reveal-stagger="25"
+              data-reveal-delay="200"
+            >
               新しい出会いがあなたの可能性を広げる
             </h1>
             
-            <p className="text-lg sm:text-xl text-white/90 leading-relaxed max-w-lg">
-              1人でも安心して参加できる新歓イベントを探して、
-              大学生活の第一歩を踏み出そう。
+            <p 
+              className="text-lg sm:text-xl text-white/90 leading-relaxed max-w-lg"
+              data-reveal="stagger-word"
+              data-reveal-stagger="60"
+              data-reveal-delay="600"
+            >
+              1人でも安心して参加できる新歓イベントを探して、大学生活の第一歩を踏み出そう。
             </p>
             
-            <div className="pt-4">
+            <div 
+              className="pt-4"
+              data-reveal="fade"
+              data-reveal-delay="1000"
+            >
               <Link href="/events">
                 <Button 
                   size="lg" 
@@ -66,24 +83,38 @@ export default function HomePage() {
       <section className="py-20 sm:py-28">
         <div className="container-narrow">
           <div className="text-center mb-16">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4">
+            <h2 
+              className="text-2xl sm:text-3xl font-bold mb-4 font-rounded"
+              data-reveal="stagger"
+              data-reveal-stagger="35"
+            >
               安心の3要素
             </h2>
-            <p className="text-muted-foreground">
+            <p 
+              className="text-muted-foreground"
+              data-reveal="stagger-word"
+              data-reveal-stagger="80"
+              data-reveal-delay="200"
+            >
               新歓ナビだからできること
             </p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
             {reasons.map((reason, index) => (
-              <div key={reason.title} className="text-left space-y-4">
+              <div 
+                key={reason.title} 
+                className="text-left space-y-4"
+                data-reveal="fade"
+                data-reveal-delay={String(index * 150)}
+              >
                 <div className="flex items-center gap-3">
                   <div className="h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 flex shrink-0">
                     <reason.icon className="h-6 w-6 text-primary" />
                   </div>
                   <span className="text-4xl font-bold text-primary/20">{index + 1}</span>
                 </div>
-                <h3 className="text-lg font-semibold">{reason.title}</h3>
+                <h3 className="text-lg font-semibold font-rounded">{reason.title}</h3>
                 <p className="text-muted-foreground text-sm leading-relaxed">
                   {reason.description}
                 </p>
@@ -96,21 +127,37 @@ export default function HomePage() {
       <section className="py-20 sm:py-28 bg-muted/40">
         <div className="container-narrow">
           <div className="max-w-2xl mx-auto text-center space-y-8">
-            <h2 className="text-2xl sm:text-3xl font-bold">
+            <h2 
+              className="text-2xl sm:text-3xl font-bold font-rounded"
+              data-reveal="stagger"
+              data-reveal-stagger="35"
+            >
               迷っているあなたへ
             </h2>
-            <p className="text-muted-foreground text-lg leading-relaxed">
+            <p 
+              className="text-muted-foreground text-lg leading-relaxed"
+              data-reveal="fade"
+              data-reveal-delay="150"
+            >
               「1人で行くのは不安」「知らない人ばかりで緊張する」
               <br className="hidden sm:block" />
               その気持ち、みんな同じです。
             </p>
-            <p className="text-foreground font-medium text-lg">
+            <p 
+              className="text-foreground font-medium text-lg"
+              data-reveal="fade"
+              data-reveal-delay="300"
+            >
               だからこそ、経験者たちの声を参考に、
               <br className="hidden sm:block" />
               自分に合ったイベントを見つけてみませんか？
             </p>
             
-            <div className="pt-4">
+            <div 
+              className="pt-4"
+              data-reveal="fade"
+              data-reveal-delay="450"
+            >
               <Link href="/events">
                 <Button 
                   size="lg" 
