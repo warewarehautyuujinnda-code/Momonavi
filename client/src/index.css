@@ -63,6 +63,7 @@
   --chart-5: 262 30% 80%;
 
   --font-sans: 'Inter', 'Noto Sans JP', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-rounded: 'M PLUS Rounded 1c', 'Noto Sans JP', sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: Menlo, monospace;
   --radius: 1rem;
@@ -257,5 +258,56 @@
 
   .container-narrow {
     @apply max-w-5xl mx-auto px-5 sm:px-6;
+  }
+
+  .font-rounded {
+    font-family: var(--font-rounded);
+  }
+}
+
+/* Reveal Text Animation */
+.reveal-text {
+  display: inline;
+}
+
+.reveal-text .reveal-char {
+  display: inline-block;
+  opacity: 0;
+  transform: translateY(14px);
+  filter: blur(3px);
+  transition: 
+    opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.4s ease-out;
+}
+
+.reveal-text.is-visible .reveal-char {
+  opacity: 1;
+  transform: translateY(0);
+  filter: blur(0);
+}
+
+/* Reveal Block Animation */
+.reveal-block {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: 
+    opacity 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.reveal-block.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-text .reveal-char,
+  .reveal-block {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
   }
 }
