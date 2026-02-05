@@ -120,6 +120,13 @@ export default function GroupDetailPage() {
             <h1 className="text-2xl sm:text-4xl font-bold leading-tight" data-testid="text-group-name">
               {group.name}
             </h1>
+
+            <div 
+              className="w-full aspect-video bg-muted rounded-2xl flex items-center justify-center"
+              data-testid="img-group-photo"
+            >
+              <span className="text-muted-foreground text-sm">写真準備中</span>
+            </div>
           </div>
 
           <Card className="rounded-2xl border-0 shadow-sm">
@@ -137,18 +144,6 @@ export default function GroupDetailPage() {
                     <div>
                       <p className="text-xs text-muted-foreground">部員数</p>
                       <p className="font-semibold">{group.memberCount}人</p>
-                    </div>
-                  </div>
-                )}
-
-                {group.foundedYear && (
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <Calendar className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">設立</p>
-                      <p className="font-semibold">{group.foundedYear}年</p>
                     </div>
                   </div>
                 )}
