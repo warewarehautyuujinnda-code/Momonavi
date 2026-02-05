@@ -188,12 +188,24 @@ export async function syncEventsFromNotion(): Promise<{ synced: number; errors: 
           endDateValue = getNotionDate(endDateProp);
         } else if (endTimeProp) {
           // If end time is a text like "18:00", combine with event date
+          // Interpret time as JST (UTC+9) to match the start date
           const endTimeText = getNotionText(endTimeProp);
           if (endTimeText && eventDate) {
             const timeMatch = endTimeText.match(/^(\d{1,2}):(\d{2})$/);
             if (timeMatch) {
-              endDateValue = new Date(eventDate);
-              endDateValue.setHours(parseInt(timeMatch[1], 10), parseInt(timeMatch[2], 10), 0, 0);
+              const endHour = parseInt(timeMatch[1], 10);
+              const endMinute = parseInt(timeMatch[2], 10);
+              // Create end date with the same date as event, but adjust for JST (UTC+9)
+              // Get the event date in JST terms
+              const eventDateJST = new Date(eventDate.getTime() + 9 * 60 * 60 * 1000);
+              // Create end time in JST
+              endDateValue = new Date(Date.UTC(
+                eventDateJST.getUTCFullYear(),
+                eventDateJST.getUTCMonth(),
+                eventDateJST.getUTCDate(),
+                endHour - 9, // Convert JST to UTC
+                endMinute
+              ));
             }
           }
         }
