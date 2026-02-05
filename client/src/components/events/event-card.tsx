@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { EventWithGroup } from "@shared/schema";
@@ -31,25 +31,6 @@ function getImageForGenre(genre?: string): string {
   return genreImageMap[genre] || cultureImg;
 }
 
-function SoloFriendlinessIndicator({ level }: { level: number }) {
-  return (
-    <div className="flex items-center gap-2">
-      <Users className="h-4 w-4 text-muted-foreground" />
-      <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className={`h-2 w-4 rounded-full ${
-              i <= level ? "bg-primary" : "bg-muted"
-            }`}
-          />
-        ))}
-      </div>
-      <span className="text-xs text-muted-foreground">1人OK</span>
-    </div>
-  );
-}
-
 export function EventCard({ event }: EventCardProps) {
   const eventDate = new Date(event.date);
   const imageUrl = getImageForGenre(event.group?.genre);
@@ -68,11 +49,6 @@ export function EventCard({ event }: EventCardProps) {
             <Badge className="bg-white/90 text-foreground text-xs font-normal rounded-lg shadow-sm">
               {event.group?.university}
             </Badge>
-            {event.beginnerWelcome && (
-              <Badge className="bg-primary text-primary-foreground text-xs rounded-lg shadow-sm">
-                初心者歓迎
-              </Badge>
-            )}
           </div>
         </div>
 
@@ -99,8 +75,6 @@ export function EventCard({ event }: EventCardProps) {
               <span className="truncate">{event.location}</span>
             </div>
           </div>
-
-          <SoloFriendlinessIndicator level={event.soloFriendliness} />
 
           {event.atmosphereTags && event.atmosphereTags.length > 0 && (
             <div className="flex flex-wrap gap-1.5">

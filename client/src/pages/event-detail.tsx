@@ -244,11 +244,6 @@ export default function EventDetailPage() {
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary" className="rounded-lg">{event.group.university}</Badge>
               <Badge variant="outline" className="rounded-lg border-muted-foreground/20">{event.group.category}</Badge>
-              {event.beginnerWelcome && (
-                <Badge className="bg-primary/10 text-primary border-0 rounded-lg">
-                  初心者歓迎
-                </Badge>
-              )}
               {isPast && (
                 <Badge variant="secondary" className="bg-muted rounded-lg">
                   終了済み

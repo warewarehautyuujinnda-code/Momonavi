@@ -77,6 +77,13 @@ export async function syncGroupsFromNotion(): Promise<{ synced: number; errors: 
           console.log("Group properties:", Object.keys(props));
         }
         
+        // Check approval checkbox - skip if not approved
+        const isApproved = getNotionCheckbox(props["承認"] || props["Approved"]);
+        if (!isApproved) {
+          console.log(`Group ${notionId}: Not approved, skipping`);
+          continue;
+        }
+        
         const groupData = {
           id: notionId,
           name: getNotionText(props["名前"] || props["Name"] || props["団体名"]) || "Unknown",
@@ -140,6 +147,13 @@ export async function syncEventsFromNotion(): Promise<{ synced: number; errors: 
         // Log available properties for debugging
         if (synced === 0) {
           console.log("Event properties:", Object.keys(props));
+        }
+        
+        // Check approval checkbox - skip if not approved
+        const isApproved = getNotionCheckbox(props["承認"] || props["Approved"]);
+        if (!isApproved) {
+          console.log(`Event ${notionId}: Not approved, skipping`);
+          continue;
         }
         
         // Get groupId - might be a relation or text
@@ -219,13 +233,10 @@ export async function syncEventsFromNotion(): Promise<{ synced: number; errors: 
           endDate: endDateValue,
           location: getNotionText(props["場所"] || props["Location"] || props["開催場所"]) || "",
           requirements: getNotionText(props["持ち物"] || props["Requirements"]) || null,
-          beginnerWelcome: getNotionCheckbox(props["初心者歓迎"] || props["Beginner"]),
-          soloFriendliness: getNotionNumber(props["１人参加しやすさ"] || props["1人参加しやすさ"] || props["SoloFriendliness"]) || 3,
           atmosphereTags: getNotionMultiSelect(props["雰囲気タグ"] || props["Atmosphere"]) || [],
           participationFlow: getNotionText(props["参加の流れ"] || props["Flow"]) || null,
           maxParticipants: getNotionNumber(props["定員"] || props["MaxParticipants"]) || null,
           imageUrl: getNotionText(props["画像URL"] || props["Image"]) || null,
-          status: getNotionText(props["承認状態"] || props["Status"]) || "approved",
         };
         
         // Upsert
@@ -325,6 +336,13 @@ export async function syncArticlesFromNotion(): Promise<{ synced: number; errors
         // Log available properties for debugging
         if (synced === 0) {
           console.log("Article properties:", Object.keys(props));
+        }
+        
+        // Check approval checkbox - skip if not approved
+        const isApproved = getNotionCheckbox(props["承認"] || props["Approved"]);
+        if (!isApproved) {
+          console.log(`Article ${notionId}: Not approved, skipping`);
+          continue;
         }
         
         // Parse published date
