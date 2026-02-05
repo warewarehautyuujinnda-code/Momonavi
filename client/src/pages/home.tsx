@@ -36,7 +36,7 @@ export default function HomePage() {
         <div className="relative z-10 container-narrow py-20">
           <div className="max-w-2xl space-y-6">
             <h1 
-              className="text-2xl sm:text-3xl md:text-4xl text-white leading-tight font-rounded"
+              className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight font-rounded"
               data-reveal="stagger"
               data-reveal-stagger="30"
             >
