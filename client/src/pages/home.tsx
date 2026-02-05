@@ -35,19 +35,20 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
         
         <div className="relative z-10 container-narrow py-20">
-          <div className="max-w-2xl space-y-3">
+          <div className="max-w-2xl mx-auto space-y-0">
             <div 
               data-reveal="fade"
+              className="flex justify-center"
             >
               <img 
                 src={momonaviLogo} 
                 alt="MOMONAVI" 
-                className="h-40 sm:h-48 md:h-64 w-auto"
+                className="h-40 sm:h-48 md:h-64 w-auto -mb-4"
               />
             </div>
             
             <p 
-              className="text-lg sm:text-xl text-white/90 leading-relaxed"
+              className="text-lg sm:text-xl text-white/90 leading-relaxed text-center"
               data-reveal="fade"
               data-reveal-delay="400"
             >
@@ -57,7 +58,7 @@ export default function HomePage() {
             </p>
             
             <div 
-              className="pt-4"
+              className="pt-4 flex justify-center"
               data-reveal="fade"
               data-reveal-delay="700"
             >
