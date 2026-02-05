@@ -150,6 +150,28 @@ export async function registerRoutes(
     }
   });
 
+  // Get review stats (average solo friendliness) for a group
+  app.get("/api/groups/:id/review-stats", async (req, res) => {
+    try {
+      const stats = await storage.getGroupReviewStats(req.params.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching group review stats:", error);
+      res.status(500).json({ error: "Failed to fetch group review stats" });
+    }
+  });
+
+  // Get past events for a group (events before today, excluding the current event)
+  app.get("/api/groups/:id/past-events", async (req, res) => {
+    try {
+      const pastEvents = await storage.getPastEventsByGroup(req.params.id);
+      res.json(pastEvents);
+    } catch (error) {
+      console.error("Error fetching past events:", error);
+      res.status(500).json({ error: "Failed to fetch past events" });
+    }
+  });
+
   // Get all articles
   app.get("/api/articles", async (req, res) => {
     try {

@@ -24,6 +24,8 @@ export interface IStorage {
   
   getReviewsByEvent(eventId: string): Promise<Review[]>;
   getReviewsByGroup(groupId: string): Promise<Review[]>;
+  getGroupReviewStats(groupId: string): Promise<{ averageSoloFriendliness: number; reviewCount: number }>;
+  getPastEventsByGroup(groupId: string): Promise<Event[]>;
   createReview(review: InsertReview): Promise<Review>;
   
   getCompanionPosts(): Promise<CompanionPost[]>;
@@ -145,6 +147,41 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(reviews.createdAt));
     
     return allReviews.filter((r) => eventIds.includes(r.eventId));
+  }
+
+  async getGroupReviewStats(groupId: string): Promise<{ averageSoloFriendliness: number; reviewCount: number }> {
+    const groupEvents = await db.select().from(events)
+      .where(eq(events.groupId, groupId));
+    const eventIds = groupEvents.map((e) => e.id);
+    
+    if (eventIds.length === 0) {
+      return { averageSoloFriendliness: 0, reviewCount: 0 };
+    }
+    
+    const allReviews = await db.select().from(reviews);
+    const groupReviews = allReviews.filter((r) => eventIds.includes(r.eventId));
+    
+    if (groupReviews.length === 0) {
+      return { averageSoloFriendliness: 0, reviewCount: 0 };
+    }
+    
+    const totalSoloFriendliness = groupReviews.reduce((sum, r) => sum + r.soloFriendlinessRating, 0);
+    const averageSoloFriendliness = totalSoloFriendliness / groupReviews.length;
+    
+    return {
+      averageSoloFriendliness: Math.round(averageSoloFriendliness * 10) / 10,
+      reviewCount: groupReviews.length,
+    };
+  }
+
+  async getPastEventsByGroup(groupId: string): Promise<Event[]> {
+    const now = new Date();
+    const allGroupEvents = await db.select().from(events)
+      .where(eq(events.groupId, groupId))
+      .orderBy(desc(events.date));
+    
+    // Filter to only past events (date before now)
+    return allGroupEvents.filter((e) => new Date(e.date) < now && e.status === "approved");
   }
 
   async createReview(insertReview: InsertReview): Promise<Review> {

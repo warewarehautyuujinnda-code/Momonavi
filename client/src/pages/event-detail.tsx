@@ -7,31 +7,42 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import { 
   Calendar, 
   MapPin, 
   Users, 
   ChevronLeft,
   Backpack,
-  ArrowRight
+  ArrowRight,
+  Share2,
+  CalendarPlus,
+  ExternalLink,
+  History
 } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import type { EventWithGroup, Review } from "@shared/schema";
+import type { EventWithGroup, Review, Event } from "@shared/schema";
 
-function SoloFriendlinessBar({ level }: { level: number }) {
+function SoloFriendlinessBar({ level, isGroupAverage, reviewCount }: { level: number; isGroupAverage?: boolean; reviewCount?: number }) {
+  const displayLevel = Math.round(level * 10) / 10;
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">1人参加しやすさ</span>
-        <span className="text-lg font-semibold text-primary">{level}/5</span>
+        <span className="text-sm text-muted-foreground">
+          1人参加しやすさ
+          {isGroupAverage && reviewCount !== undefined && reviewCount > 0 && (
+            <span className="ml-1 text-xs">（過去レビュー{reviewCount}件の平均）</span>
+          )}
+        </span>
+        <span className="text-lg font-semibold text-primary">{displayLevel}/5</span>
       </div>
       <div className="flex gap-1.5">
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
             className={`h-2.5 flex-1 rounded-full ${
-              i <= level ? "bg-primary" : "bg-muted"
+              i <= Math.round(level) ? "bg-primary" : "bg-muted"
             }`}
           />
         ))}
@@ -49,8 +60,61 @@ function SoloFriendlinessBar({ level }: { level: number }) {
   );
 }
 
+function generateGoogleCalendarUrl(event: EventWithGroup): string {
+  const startDate = new Date(event.date);
+  let endDate: Date;
+  
+  if (event.endDate) {
+    endDate = new Date(event.endDate);
+  } else {
+    // Default: 2 hours after start if no end time specified
+    endDate = new Date(startDate.getTime() + 2 * 60 * 60 * 1000);
+  }
+  
+  // Format as YYYYMMDDTHHmmssZ (UTC format for Google Calendar)
+  const formatDateForCalendar = (date: Date): string => {
+    const year = date.getUTCFullYear();
+    const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const day = String(date.getUTCDate()).padStart(2, '0');
+    const hours = String(date.getUTCHours()).padStart(2, '0');
+    const minutes = String(date.getUTCMinutes()).padStart(2, '0');
+    const seconds = String(date.getUTCSeconds()).padStart(2, '0');
+    return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+  };
+  
+  const dates = `${formatDateForCalendar(startDate)}/${formatDateForCalendar(endDate)}`;
+  const details = `${event.description || ''}\n\nイベントページ: ${window.location.href}`;
+  
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    dates: dates,
+    details: details,
+    location: event.location || '',
+  });
+  
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function PastEventCard({ event }: { event: Event }) {
+  const eventDate = new Date(event.date);
+  return (
+    <Link href={`/events/${event.id}`}>
+      <Card className="rounded-xl border-0 shadow-sm hover-elevate cursor-pointer" data-testid={`past-event-${event.id}`}>
+        <CardContent className="p-4">
+          <p className="text-xs text-muted-foreground mb-1">
+            {format(eventDate, "yyyy年M月d日", { locale: ja })}
+          </p>
+          <p className="font-medium text-sm line-clamp-2">{event.title}</p>
+        </CardContent>
+      </Card>
+    </Link>
+  );
+}
+
 export default function EventDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { toast } = useToast();
 
   const { data: event, isLoading: eventLoading } = useQuery<EventWithGroup>({
     queryKey: ["/api/events", id],
@@ -59,6 +123,50 @@ export default function EventDetailPage() {
   const { data: reviews, isLoading: reviewsLoading } = useQuery<Review[]>({
     queryKey: ["/api/events", id, "reviews"],
   });
+
+  const { data: groupReviewStats } = useQuery<{ averageSoloFriendliness: number; reviewCount: number }>({
+    queryKey: ["/api/groups", event?.groupId, "review-stats"],
+    enabled: !!event?.groupId,
+  });
+
+  const { data: pastEvents } = useQuery<Event[]>({
+    queryKey: ["/api/groups", event?.groupId, "past-events"],
+    enabled: !!event?.groupId,
+  });
+
+  const handleShare = async () => {
+    const shareData = {
+      title: event?.title || '',
+      text: event?.description || `${event?.group.name}のイベント`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "URLをコピーしました",
+          description: "友だちにリンクを共有しましょう",
+        });
+      }
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        await navigator.clipboard.writeText(window.location.href);
+        toast({
+          title: "URLをコピーしました",
+          description: "友だちにリンクを共有しましょう",
+        });
+      }
+    }
+  };
+
+  const handleAddToCalendar = () => {
+    if (event) {
+      window.open(generateGoogleCalendarUrl(event), '_blank', 'noopener,noreferrer');
+    }
+  };
 
   if (eventLoading) {
     return (
@@ -150,12 +258,38 @@ export default function EventDetailPage() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 sm:col-span-2">
                   <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <MapPin className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
-                    <p className="font-semibold">{event.location}</p>
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="font-semibold">{event.location}</p>
+                      <a
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1"
+                        data-testid="link-google-maps"
+                      >
+                        Googleマップで開く
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </div>
+                    {event.location && (
+                      <div className="rounded-xl overflow-hidden border">
+                        <iframe
+                          src={`https://maps.google.com/maps?q=${encodeURIComponent(event.location)}&output=embed&hl=ja`}
+                          width="100%"
+                          height="200"
+                          style={{ border: 0 }}
+                          allowFullScreen
+                          loading="lazy"
+                          referrerPolicy="no-referrer-when-downgrade"
+                          title="開催場所"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -172,9 +306,34 @@ export default function EventDetailPage() {
                 )}
               </div>
 
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  variant="outline"
+                  className="gap-2 rounded-xl flex-1 sm:flex-none"
+                  onClick={handleShare}
+                  data-testid="button-share"
+                >
+                  <Share2 className="h-4 w-4" />
+                  友だちに共有
+                </Button>
+                <Button
+                  variant="outline"
+                  className="gap-2 rounded-xl flex-1 sm:flex-none"
+                  onClick={handleAddToCalendar}
+                  data-testid="button-calendar"
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                  Googleカレンダーに追加
+                </Button>
+              </div>
+
               <div className="h-px bg-border" />
 
-              <SoloFriendlinessBar level={event.soloFriendliness} />
+              <SoloFriendlinessBar 
+                level={groupReviewStats?.reviewCount ? groupReviewStats.averageSoloFriendliness : event.soloFriendliness} 
+                isGroupAverage={!!groupReviewStats?.reviewCount}
+                reviewCount={groupReviewStats?.reviewCount}
+              />
 
               {event.atmosphereTags && event.atmosphereTags.length > 0 && (
                 <>
@@ -216,6 +375,32 @@ export default function EventDetailPage() {
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                   {event.participationFlow}
                 </p>
+              </CardContent>
+            </Card>
+          )}
+
+          {pastEvents && pastEvents.filter(e => e.id !== event.id).length > 0 && (
+            <Card className="rounded-2xl border-0 shadow-sm">
+              <CardHeader className="p-6 sm:p-8 pb-0">
+                <CardTitle className="text-xl flex items-center gap-2">
+                  <History className="h-5 w-5" />
+                  過去のイベント
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 sm:p-8 pt-4 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {pastEvents.filter(e => e.id !== event.id).slice(0, 3).map((pastEvent) => (
+                    <PastEventCard key={pastEvent.id} event={pastEvent} />
+                  ))}
+                </div>
+                {pastEvents.filter(e => e.id !== event.id).length > 3 && (
+                  <Link href={`/groups/${event.groupId}`}>
+                    <Button variant="ghost" className="w-full gap-2 rounded-xl" data-testid="link-more-events">
+                      もっと見る
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                )}
               </CardContent>
             </Card>
           )}
