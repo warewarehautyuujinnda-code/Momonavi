@@ -179,13 +179,32 @@ export async function syncEventsFromNotion(): Promise<{ synced: number; errors: 
           continue;
         }
         
+        // Parse end time - can be a date property or a text property (HH:mm format)
+        let endDateValue: Date | null = null;
+        const endDateProp = props["終了日時"] || props["EndDate"];
+        const endTimeProp = props["終了時刻"] || props["EndTime"];
+        
+        if (endDateProp) {
+          endDateValue = getNotionDate(endDateProp);
+        } else if (endTimeProp) {
+          // If end time is a text like "18:00", combine with event date
+          const endTimeText = getNotionText(endTimeProp);
+          if (endTimeText && eventDate) {
+            const timeMatch = endTimeText.match(/^(\d{1,2}):(\d{2})$/);
+            if (timeMatch) {
+              endDateValue = new Date(eventDate);
+              endDateValue.setHours(parseInt(timeMatch[1], 10), parseInt(timeMatch[2], 10), 0, 0);
+            }
+          }
+        }
+        
         const eventData = {
           id: notionId,
           groupId: groupId,
           title: getNotionText(props["イベント名"] || props["タイトル"] || props["Title"]) || "Unknown Event",
           description: getNotionText(props["説明"] || props["Description"] || props["内容"]) || "",
           date: eventDate,
-          endDate: getNotionDate(props["終了日時"] || props["EndDate"]) || null,
+          endDate: endDateValue,
           location: getNotionText(props["場所"] || props["Location"] || props["開催場所"]) || "",
           requirements: getNotionText(props["持ち物"] || props["Requirements"]) || null,
           beginnerWelcome: getNotionCheckbox(props["初心者歓迎"] || props["Beginner"]),

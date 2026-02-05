@@ -144,8 +144,8 @@ export default function EventDetailPage() {
                       {format(eventDate, "yyyy年M月d日(E)", { locale: ja })}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {format(eventDate, "HH:mm", { locale: ja })}〜
-                      {event.endDate && format(new Date(event.endDate), "HH:mm", { locale: ja })}
+                      {format(eventDate, "HH:mm", { locale: ja })}
+                      {event.endDate ? `〜${format(new Date(event.endDate), "HH:mm", { locale: ja })}` : "〜"}
                     </p>
                   </div>
                 </div>

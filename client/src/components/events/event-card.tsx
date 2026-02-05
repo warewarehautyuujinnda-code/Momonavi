@@ -59,7 +59,10 @@ export function EventCard({ event }: EventCardProps) {
           <div className="space-y-2 text-sm text-muted-foreground">
             <div className="flex items-center gap-3">
               <Calendar className="h-4 w-4 shrink-0" />
-              <span>{format(eventDate, "M月d日(E) HH:mm", { locale: ja })}</span>
+              <span>
+                {format(eventDate, "M月d日(E) HH:mm", { locale: ja })}
+                {event.endDate ? `〜${format(new Date(event.endDate), "HH:mm", { locale: ja })}` : ""}
+              </span>
             </div>
             <div className="flex items-center gap-3">
               <MapPin className="h-4 w-4 shrink-0" />
