@@ -8,36 +8,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { universities, groupCategories, genres } from "@shared/schema";
 import { Filter, X } from "lucide-react";
 import { useState } from "react";
 
 export interface EventFilters {
   university: string | null;
   category: string | null;
-  genre: string | null;
+  atmosphereTag: string | null;
   minSoloFriendliness: number;
+}
+
+export interface FilterOptions {
+  universities: string[];
+  categories: string[];
+  atmosphereTags: string[];
 }
 
 interface EventFiltersProps {
   filters: EventFilters;
   onFiltersChange: (filters: EventFilters) => void;
+  filterOptions: FilterOptions;
 }
 
-export function EventFiltersComponent({ filters, onFiltersChange }: EventFiltersProps) {
+export function EventFiltersComponent({ filters, onFiltersChange, filterOptions }: EventFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const hasActiveFilters =
     filters.university ||
     filters.category ||
-    filters.genre ||
+    filters.atmosphereTag ||
     filters.minSoloFriendliness > 1;
 
   const clearFilters = () => {
     onFiltersChange({
       university: null,
       category: null,
-      genre: null,
+      atmosphereTag: null,
       minSoloFriendliness: 1,
     });
   };
@@ -87,7 +93,7 @@ export function EventFiltersComponent({ filters, onFiltersChange }: EventFilters
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">すべて</SelectItem>
-                {universities.map((uni) => (
+                {filterOptions.universities.map((uni) => (
                   <SelectItem key={uni} value={uni}>
                     {uni}
                   </SelectItem>
@@ -109,7 +115,7 @@ export function EventFiltersComponent({ filters, onFiltersChange }: EventFilters
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">すべて</SelectItem>
-                {groupCategories.map((cat) => (
+                {filterOptions.categories.map((cat) => (
                   <SelectItem key={cat} value={cat}>
                     {cat}
                   </SelectItem>
@@ -119,21 +125,21 @@ export function EventFiltersComponent({ filters, onFiltersChange }: EventFilters
           </div>
 
           <div className="space-y-2">
-            <Label className="text-sm text-muted-foreground">ジャンル</Label>
+            <Label className="text-sm text-muted-foreground">雰囲気</Label>
             <Select
-              value={filters.genre || "all"}
+              value={filters.atmosphereTag || "all"}
               onValueChange={(v) =>
-                onFiltersChange({ ...filters, genre: v === "all" ? null : v })
+                onFiltersChange({ ...filters, atmosphereTag: v === "all" ? null : v })
               }
             >
-              <SelectTrigger className="rounded-xl" data-testid="select-genre">
+              <SelectTrigger className="rounded-xl" data-testid="select-atmosphere">
                 <SelectValue placeholder="すべて" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">すべて</SelectItem>
-                {genres.map((genre) => (
-                  <SelectItem key={genre} value={genre}>
-                    {genre}
+                {filterOptions.atmosphereTags.map((tag) => (
+                  <SelectItem key={tag} value={tag}>
+                    {tag}
                   </SelectItem>
                 ))}
               </SelectContent>

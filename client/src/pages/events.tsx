@@ -16,13 +16,24 @@ export default function EventsPage() {
   const [filters, setFilters] = useState<EventFilters>({
     university: initialUniversity,
     category: null,
-    genre: null,
+    atmosphereTag: null,
     minSoloFriendliness: 1,
   });
 
   const { data: events, isLoading } = useQuery<EventWithGroup[]>({
     queryKey: ["/api/events"],
   });
+
+  // Extract unique filter options from actual event/group data
+  const filterOptions = useMemo(() => {
+    if (!events) return { universities: [] as string[], categories: [] as string[], atmosphereTags: [] as string[] };
+    
+    const universities = Array.from(new Set(events.map(e => e.group.university).filter((u): u is string => Boolean(u)))).sort();
+    const categories = Array.from(new Set(events.map(e => e.group.category).filter((c): c is string => Boolean(c)))).sort();
+    const atmosphereTags = Array.from(new Set(events.flatMap(e => e.group.atmosphereTags || []))).sort();
+    
+    return { universities, categories, atmosphereTags };
+  }, [events]);
 
   const filteredEvents = useMemo(() => {
     if (!events) return [];
@@ -34,7 +45,7 @@ export default function EventsPage() {
       if (filters.category && event.group.category !== filters.category) {
         return false;
       }
-      if (filters.genre && event.group.genre !== filters.genre) {
+      if (filters.atmosphereTag && !(event.group.atmosphereTags || []).includes(filters.atmosphereTag)) {
         return false;
       }
       if (event.soloFriendliness < filters.minSoloFriendliness) {
@@ -59,7 +70,8 @@ export default function EventsPage() {
 
           <EventFiltersComponent 
             filters={filters} 
-            onFiltersChange={setFilters} 
+            onFiltersChange={setFilters}
+            filterOptions={filterOptions}
           />
 
           {isLoading ? (
