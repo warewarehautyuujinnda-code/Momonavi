@@ -4,6 +4,7 @@ import { Layout } from "@/components/layout/layout";
 import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { ArrowRight, Users, MessageCircle, MapPin } from "lucide-react";
 import heroImage from "@/assets/images/hero-students.jpg";
+import momonaviLogo from "@/assets/images/momonavi-logo.png";
 
 const reasons = [
   {
@@ -35,13 +36,15 @@ export default function HomePage() {
         
         <div className="relative z-10 container-narrow py-20">
           <div className="max-w-2xl space-y-6">
-            <h1 
-              className="text-2xl sm:text-3xl md:text-4xl font-bold text-white leading-tight font-rounded"
-              data-reveal="stagger"
-              data-reveal-stagger="30"
+            <div 
+              data-reveal="fade"
             >
-              Re：1から始める大学生活
-            </h1>
+              <img 
+                src={momonaviLogo} 
+                alt="MOMONAVI" 
+                className="h-20 sm:h-24 md:h-32 w-auto"
+              />
+            </div>
             
             <p 
               className="text-lg sm:text-xl text-white/90 leading-relaxed"
