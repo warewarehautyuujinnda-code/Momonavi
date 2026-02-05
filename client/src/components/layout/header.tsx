@@ -2,6 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Calendar, Users, UserPlus, BookOpen, Mail, Menu, X } from "lucide-react";
 import { useState } from "react";
+import logoImg from "@/assets/images/momonavi-logo.png";
 
 export function Header() {
   const [location] = useLocation();
@@ -20,7 +21,7 @@ export function Header() {
       <div className="container-narrow">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 hover-elevate rounded-xl px-3 py-2 -mx-3" data-testid="link-home">
-            <span className="font-bold text-xl tracking-tight text-primary">オカナビ</span>
+            <img src={logoImg} alt="MOMONAVI" className="h-8 w-auto" />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">

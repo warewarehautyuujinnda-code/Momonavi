@@ -1,5 +1,6 @@
 import { SiInstagram } from "react-icons/si";
 import { BookOpen, ExternalLink } from "lucide-react";
+import logoImg from "@/assets/images/momonavi-logo.png";
 
 export function Footer() {
   const siteLinks = [
@@ -22,7 +23,7 @@ export function Footer() {
       <div className="container-narrow py-12">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-8">
           <div className="space-y-3">
-            <h3 className="font-bold text-lg">新歓ナビ</h3>
+            <img src={logoImg} alt="MOMONAVI" className="h-10 w-auto" />
             <p className="text-sm text-muted-foreground max-w-xs">
               岡山の大学新入生向け新歓イベント検索サービス。
               新しい出会いへの一歩を応援します。
