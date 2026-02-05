@@ -34,37 +34,29 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
         
         <div className="relative z-10 container-narrow py-20">
-          <div className="max-w-2xl space-y-8">
-            <p 
-              className="text-white/80 text-sm font-medium tracking-wide"
-              data-reveal="stagger"
-              data-reveal-stagger="40"
-            >
-              岡山の大学新入生へ
-            </p>
-            
+          <div className="max-w-2xl space-y-6">
             <h1 
-              className="text-3xl sm:text-4xl md:text-5xl font-bold text-white leading-tight font-rounded"
+              className="text-4xl sm:text-5xl md:text-6xl font-bold text-white leading-tight font-rounded"
               data-reveal="stagger"
-              data-reveal-stagger="25"
-              data-reveal-delay="200"
+              data-reveal-stagger="30"
             >
-              新しい出会いがあなたの可能性を広げる
+              Re：1から始める大学生活
             </h1>
             
             <p 
-              className="text-lg sm:text-xl text-white/90 leading-relaxed max-w-lg"
-              data-reveal="stagger-word"
-              data-reveal-stagger="60"
-              data-reveal-delay="600"
+              className="text-lg sm:text-xl text-white/90 leading-relaxed"
+              data-reveal="fade"
+              data-reveal-delay="400"
             >
-              1人でも安心して参加できる新歓イベントを探して、大学生活の第一歩を踏み出そう。
+              安心して参加できるイベントを探して
+              <br />
+              大学生活の第一歩を踏み出そう
             </p>
             
             <div 
               className="pt-4"
               data-reveal="fade"
-              data-reveal-delay="1000"
+              data-reveal-delay="700"
             >
               <Link href="/events">
                 <Button 
