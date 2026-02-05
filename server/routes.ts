@@ -312,7 +312,7 @@ export async function registerRoutes(
         eventDate: z.string().max(100).optional().nullable(),
         eventLocation: z.string().max(200).optional().nullable(),
         eventDescription: z.string().max(2000).optional().nullable(),
-        eventImageUrl: z.string().url().optional().nullable(),
+        eventImageUrl: z.string().url().optional().nullable().or(z.literal("")),
       });
 
       const validatedData = contactSchema.parse(req.body);
