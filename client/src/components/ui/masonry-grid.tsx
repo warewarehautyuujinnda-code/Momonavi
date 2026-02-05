@@ -9,9 +9,11 @@ interface MasonryGridProps extends React.HTMLAttributes<HTMLDivElement> {
 
 const MasonryGrid = React.forwardRef<HTMLDivElement, MasonryGridProps>(
   ({ className, columns = 3, gap = 4, children, ...props }, ref) => {
+    const gapRem = `${gap * 0.25}rem`;
+    
     const style = {
       columnCount: columns,
-      columnGap: `${gap * 0.25}rem`,
+      columnGap: gapRem,
     };
 
     const cardVariants = {
@@ -30,7 +32,8 @@ const MasonryGrid = React.forwardRef<HTMLDivElement, MasonryGridProps>(
       <div ref={ref} style={style} className={cn('w-full', className)} {...props}>
         {React.Children.map(children, (child) => (
           <motion.div
-            className="mb-4 break-inside-avoid"
+            className="break-inside-avoid"
+            style={{ marginBottom: gapRem }}
             variants={cardVariants}
             initial="hidden"
             whileInView="visible"

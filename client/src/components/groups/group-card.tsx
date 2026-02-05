@@ -39,11 +39,11 @@ export function GroupCard({ group }: GroupCardProps) {
   return (
     <Link href={`/groups/${group.id}`} data-testid={`group-card-${group.id}`}>
       <Card className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow">
-        <div className="relative h-36 overflow-hidden">
+        <div className="relative h-36 overflow-hidden" data-testid={`group-image-${group.id}`}>
           <img
             src={imageUrl}
             alt={group.name}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">

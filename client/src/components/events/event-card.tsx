@@ -57,11 +57,11 @@ export function EventCard({ event }: EventCardProps) {
   return (
     <Link href={`/events/${event.id}`} data-testid={`event-card-${event.id}`}>
       <Card className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow">
-        <div className="relative h-40 overflow-hidden">
+        <div className="relative h-40 overflow-hidden" data-testid={`event-image-${event.id}`}>
           <img
             src={imageUrl}
             alt={event.title}
-            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+            className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
