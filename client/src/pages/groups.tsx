@@ -13,20 +13,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Filter, X, SearchX } from "lucide-react";
-import { universities, groupCategories, genres } from "@shared/schema";
 import type { GroupWithEvents } from "@shared/schema";
 
 interface GroupFilters {
   university: string | null;
   category: string | null;
-  genre: string | null;
+  atmosphereTag: string | null;
 }
 
 export default function GroupsPage() {
   const [filters, setFilters] = useState<GroupFilters>({
     university: null,
     category: null,
-    genre: null,
+    atmosphereTag: null,
   });
   const [showFilters, setShowFilters] = useState(false);
 
@@ -34,7 +33,18 @@ export default function GroupsPage() {
     queryKey: ["/api/groups"],
   });
 
-  const hasActiveFilters = filters.university || filters.category || filters.genre;
+  const hasActiveFilters = filters.university || filters.category || filters.atmosphereTag;
+
+  // Extract unique filter options from actual data
+  const filterOptions = useMemo(() => {
+    if (!groups) return { universities: [] as string[], categories: [] as string[], atmosphereTags: [] as string[] };
+    
+    const universities = Array.from(new Set(groups.map(g => g.university).filter((u): u is string => Boolean(u)))).sort();
+    const categories = Array.from(new Set(groups.map(g => g.category).filter((c): c is string => Boolean(c)))).sort();
+    const atmosphereTags = Array.from(new Set(groups.flatMap(g => g.atmosphereTags || []))).sort();
+    
+    return { universities, categories, atmosphereTags };
+  }, [groups]);
 
   const filteredGroups = useMemo(() => {
     if (!groups) return [];
@@ -46,7 +56,7 @@ export default function GroupsPage() {
       if (filters.category && group.category !== filters.category) {
         return false;
       }
-      if (filters.genre && group.genre !== filters.genre) {
+      if (filters.atmosphereTag && !(group.atmosphereTags || []).includes(filters.atmosphereTag)) {
         return false;
       }
       return true;
@@ -57,7 +67,7 @@ export default function GroupsPage() {
     setFilters({
       university: null,
       category: null,
-      genre: null,
+      atmosphereTag: null,
     });
   };
 
@@ -118,7 +128,7 @@ export default function GroupsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">すべて</SelectItem>
-                      {universities.map((uni) => (
+                      {filterOptions.universities.map((uni) => (
                         <SelectItem key={uni} value={uni}>
                           {uni}
                         </SelectItem>
@@ -140,7 +150,7 @@ export default function GroupsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">すべて</SelectItem>
-                      {groupCategories.map((cat) => (
+                      {filterOptions.categories.map((cat) => (
                         <SelectItem key={cat} value={cat}>
                           {cat}
                         </SelectItem>
@@ -150,21 +160,21 @@ export default function GroupsPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm text-muted-foreground">ジャンル</Label>
+                  <Label className="text-sm text-muted-foreground">雰囲気</Label>
                   <Select
-                    value={filters.genre || "all"}
+                    value={filters.atmosphereTag || "all"}
                     onValueChange={(v) =>
-                      setFilters({ ...filters, genre: v === "all" ? null : v })
+                      setFilters({ ...filters, atmosphereTag: v === "all" ? null : v })
                     }
                   >
-                    <SelectTrigger className="rounded-xl" data-testid="select-genre">
+                    <SelectTrigger className="rounded-xl" data-testid="select-atmosphere">
                       <SelectValue placeholder="すべて" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">すべて</SelectItem>
-                      {genres.map((genre) => (
-                        <SelectItem key={genre} value={genre}>
-                          {genre}
+                      {filterOptions.atmosphereTags.map((tag) => (
+                        <SelectItem key={tag} value={tag}>
+                          {tag}
                         </SelectItem>
                       ))}
                     </SelectContent>
