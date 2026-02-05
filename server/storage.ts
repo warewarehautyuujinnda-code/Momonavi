@@ -24,7 +24,7 @@ export interface IStorage {
   
   getReviewsByEvent(eventId: string): Promise<Review[]>;
   getReviewsByGroup(groupId: string): Promise<Review[]>;
-  getGroupReviewStats(groupId: string): Promise<{ averageSoloFriendliness: number; reviewCount: number }>;
+  getGroupReviewStats(groupId: string): Promise<{ averageSoloFriendliness: number; eventCount: number }>;
   getPastEventsByGroup(groupId: string): Promise<Event[]>;
   createReview(review: InsertReview): Promise<Review>;
   
@@ -149,28 +149,26 @@ export class DatabaseStorage implements IStorage {
     return allReviews.filter((r) => eventIds.includes(r.eventId));
   }
 
-  async getGroupReviewStats(groupId: string): Promise<{ averageSoloFriendliness: number; reviewCount: number }> {
+  async getGroupReviewStats(groupId: string): Promise<{ averageSoloFriendliness: number; eventCount: number }> {
+    // Get ALL events for this group (including current and future events)
     const groupEvents = await db.select().from(events)
       .where(eq(events.groupId, groupId));
-    const eventIds = groupEvents.map((e) => e.id);
     
-    if (eventIds.length === 0) {
-      return { averageSoloFriendliness: 0, reviewCount: 0 };
+    // Filter to approved events that have soloFriendliness set
+    const eventsWithSoloFriendliness = groupEvents.filter(
+      (e) => e.status === "approved" && e.soloFriendliness !== null && e.soloFriendliness !== undefined
+    );
+    
+    if (eventsWithSoloFriendliness.length === 0) {
+      return { averageSoloFriendliness: 0, eventCount: 0 };
     }
     
-    const allReviews = await db.select().from(reviews);
-    const groupReviews = allReviews.filter((r) => eventIds.includes(r.eventId));
-    
-    if (groupReviews.length === 0) {
-      return { averageSoloFriendliness: 0, reviewCount: 0 };
-    }
-    
-    const totalSoloFriendliness = groupReviews.reduce((sum, r) => sum + r.soloFriendlinessRating, 0);
-    const averageSoloFriendliness = totalSoloFriendliness / groupReviews.length;
+    const totalSoloFriendliness = eventsWithSoloFriendliness.reduce((sum, e) => sum + (e.soloFriendliness || 0), 0);
+    const averageSoloFriendliness = totalSoloFriendliness / eventsWithSoloFriendliness.length;
     
     return {
       averageSoloFriendliness: Math.round(averageSoloFriendliness * 10) / 10,
-      reviewCount: groupReviews.length,
+      eventCount: eventsWithSoloFriendliness.length,
     };
   }
 

@@ -24,15 +24,37 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { EventWithGroup, Review, Event } from "@shared/schema";
 
-function SoloFriendlinessBar({ level, isGroupAverage, reviewCount }: { level: number; isGroupAverage?: boolean; reviewCount?: number }) {
+function SoloFriendlinessBar({ level, eventCount, hasData }: { level: number; eventCount?: number; hasData: boolean }) {
+  if (!hasData) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">1人参加しやすさ</span>
+          <span className="text-sm text-muted-foreground">過去データなし</span>
+        </div>
+        <div className="flex gap-1.5">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div
+              key={i}
+              className="h-2.5 flex-1 rounded-full bg-muted"
+            />
+          ))}
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          この団体のイベントデータがまだありません
+        </p>
+      </div>
+    );
+  }
+
   const displayLevel = Math.round(level * 10) / 10;
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <span className="text-sm text-muted-foreground">
           1人参加しやすさ
-          {isGroupAverage && reviewCount !== undefined && reviewCount > 0 && (
-            <span className="ml-1 text-xs">（過去レビュー{reviewCount}件の平均）</span>
+          {eventCount !== undefined && eventCount > 0 && (
+            <span className="ml-1 text-xs">（過去{eventCount}件のイベントの平均）</span>
           )}
         </span>
         <span className="text-lg font-semibold text-primary">{displayLevel}/5</span>
@@ -130,7 +152,7 @@ export default function EventDetailPage() {
     queryKey: ["/api/events", id, "reviews"],
   });
 
-  const { data: groupReviewStats } = useQuery<{ averageSoloFriendliness: number; reviewCount: number }>({
+  const { data: groupEventStats } = useQuery<{ averageSoloFriendliness: number; eventCount: number }>({
     queryKey: ["/api/groups", event?.groupId, "review-stats"],
     enabled: !!event?.groupId,
   });
@@ -336,9 +358,9 @@ export default function EventDetailPage() {
               <div className="h-px bg-border" />
 
               <SoloFriendlinessBar 
-                level={groupReviewStats?.reviewCount ? groupReviewStats.averageSoloFriendliness : event.soloFriendliness} 
-                isGroupAverage={!!groupReviewStats?.reviewCount}
-                reviewCount={groupReviewStats?.reviewCount}
+                level={groupEventStats?.eventCount ? groupEventStats.averageSoloFriendliness : 0} 
+                eventCount={groupEventStats?.eventCount}
+                hasData={!!groupEventStats?.eventCount}
               />
 
               {event.atmosphereTags && event.atmosphereTags.length > 0 && (
