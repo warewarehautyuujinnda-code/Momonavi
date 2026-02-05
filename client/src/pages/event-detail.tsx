@@ -54,7 +54,7 @@ function SoloFriendlinessBar({ level, eventCount, hasData }: { level: number; ev
         <span className="text-sm text-muted-foreground">
           1人参加しやすさ
           {eventCount !== undefined && eventCount > 0 && (
-            <span className="ml-1 text-xs">（過去{eventCount}件のイベントの平均）</span>
+            <span className="ml-1 text-xs">（{eventCount}件のイベントデータから算出）</span>
           )}
         </span>
         <span className="text-lg font-semibold text-primary">{displayLevel}/5</span>
