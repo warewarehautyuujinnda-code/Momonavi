@@ -60,7 +60,7 @@ export default function EventsPage() {
     <Layout>
       <div className="container-narrow py-10 sm:py-14">
         <div className="space-y-10">
-          <div className="space-y-3">
+          <div className="space-y-3 pb-6 border-b">
             <h1 className="text-3xl sm:text-4xl font-bold">
               イベントを探す
             </h1>

@@ -7,7 +7,7 @@ export default function BuddiesPage() {
   return (
     <Layout>
       <div className="container-narrow py-12 sm:py-16 space-y-12">
-        <div className="text-center space-y-4">
+        <div className="text-center space-y-4 pb-6 border-b">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
             1人が不安なら、仲間を探そう
           </h1>
