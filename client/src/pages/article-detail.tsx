@@ -10,11 +10,12 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { Article } from "@shared/schema";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 
 function ArticleContent({ content }: { content: string }) {
   return (
-    <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:font-bold prose-h1:text-2xl prose-h1:mt-8 prose-h1:mb-4 prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4 prose-li:text-muted-foreground prose-strong:text-foreground prose-a:text-primary prose-a:underline hover:prose-a:no-underline first:prose-headings:mt-0">
-      <ReactMarkdown>{content}</ReactMarkdown>
+    <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:font-bold prose-h1:text-2xl prose-h1:mt-8 prose-h1:mb-4 prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4 prose-li:text-muted-foreground prose-strong:text-foreground first:prose-headings:mt-0">
+      <ReactMarkdown remarkPlugins={[remarkBreaks]}>{content}</ReactMarkdown>
     </div>
   );
 }
