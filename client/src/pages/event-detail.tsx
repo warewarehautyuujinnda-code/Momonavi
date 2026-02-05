@@ -38,14 +38,20 @@ function SoloFriendlinessBar({ level, isGroupAverage, reviewCount }: { level: nu
         <span className="text-lg font-semibold text-primary">{displayLevel}/5</span>
       </div>
       <div className="flex gap-1.5">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div
-            key={i}
-            className={`h-2.5 flex-1 rounded-full ${
-              i <= Math.round(level) ? "bg-primary" : "bg-muted"
-            }`}
-          />
-        ))}
+        {[1, 2, 3, 4, 5].map((i) => {
+          const fillPercentage = Math.min(1, Math.max(0, level - (i - 1))) * 100;
+          return (
+            <div
+              key={i}
+              className="h-2.5 flex-1 rounded-full bg-muted overflow-hidden"
+            >
+              <div
+                className="h-full bg-primary rounded-full"
+                style={{ width: `${fillPercentage}%` }}
+              />
+            </div>
+          );
+        })}
       </div>
       <p className="text-sm text-muted-foreground leading-relaxed">
         {level >= 4
