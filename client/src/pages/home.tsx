@@ -35,14 +35,14 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70" />
         
         <div className="relative z-10 container-narrow py-20">
-          <div className="max-w-2xl space-y-6">
+          <div className="max-w-2xl space-y-3">
             <div 
               data-reveal="fade"
             >
               <img 
                 src={momonaviLogo} 
                 alt="MOMONAVI" 
-                className="h-20 sm:h-24 md:h-32 w-auto"
+                className="h-40 sm:h-48 md:h-64 w-auto"
               />
             </div>
             
