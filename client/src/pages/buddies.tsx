@@ -1,18 +1,13 @@
 import { Layout } from "@/components/layout/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { UserPlus, Shield, Heart, AlertTriangle, MessageCircle, ExternalLink } from "lucide-react";
+import { Shield, Heart, AlertTriangle, MessageCircle, ExternalLink } from "lucide-react";
 
 export default function BuddiesPage() {
   return (
     <Layout>
       <div className="container-narrow py-12 sm:py-16 space-y-12">
         <div className="text-center space-y-4">
-          <div className="flex justify-center">
-            <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <UserPlus className="h-8 w-8 text-primary" />
-            </div>
-          </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
             1人が不安なら、仲間を探そう
           </h1>
