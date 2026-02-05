@@ -8,14 +8,24 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Filter, X } from "lucide-react";
-import { useState } from "react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Filter, X, CalendarIcon, CalendarDays } from "lucide-react";
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
+import type { DateRange } from "react-day-picker";
 
 export interface EventFilters {
   university: string | null;
   category: string | null;
   atmosphereTag: string | null;
   minSoloFriendliness: number;
+  dateRange: DateRange | undefined;
 }
 
 export interface FilterOptions {
@@ -24,20 +34,33 @@ export interface FilterOptions {
   atmosphereTags: string[];
 }
 
+export type ViewMode = "list" | "calendar";
+
 interface EventFiltersProps {
   filters: EventFilters;
   onFiltersChange: (filters: EventFilters) => void;
   filterOptions: FilterOptions;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
 }
 
-export function EventFiltersComponent({ filters, onFiltersChange, filterOptions }: EventFiltersProps) {
+export function EventFiltersComponent({ filters, onFiltersChange, filterOptions, viewMode, onViewModeChange }: EventFiltersProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 640);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   const hasActiveFilters =
     filters.university ||
     filters.category ||
     filters.atmosphereTag ||
-    filters.minSoloFriendliness > 1;
+    filters.minSoloFriendliness > 1 ||
+    filters.dateRange?.from;
 
   const clearFilters = () => {
     onFiltersChange({
@@ -45,26 +68,46 @@ export function EventFiltersComponent({ filters, onFiltersChange, filterOptions 
       category: null,
       atmosphereTag: null,
       minSoloFriendliness: 1,
+      dateRange: undefined,
     });
+  };
+
+  const formatDateRange = () => {
+    if (!filters.dateRange?.from) return "日付を選択";
+    if (!filters.dateRange.to) {
+      return format(filters.dateRange.from, "M/d", { locale: ja });
+    }
+    return `${format(filters.dateRange.from, "M/d", { locale: ja })} - ${format(filters.dateRange.to, "M/d", { locale: ja })}`;
   };
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <Button
-          variant="outline"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="gap-2 rounded-xl"
-          data-testid="button-toggle-filters"
-        >
-          <Filter className="h-4 w-4" />
-          絞り込み
-          {hasActiveFilters && (
-            <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
-              !
-            </span>
-          )}
-        </Button>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={() => setIsExpanded(!isExpanded)}
+            className="gap-2 rounded-xl"
+            data-testid="button-toggle-filters"
+          >
+            <Filter className="h-4 w-4" />
+            絞り込み
+            {hasActiveFilters && (
+              <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
+                !
+              </span>
+            )}
+          </Button>
+          <Button
+            variant={viewMode === "calendar" ? "default" : "outline"}
+            onClick={() => onViewModeChange(viewMode === "calendar" ? "list" : "calendar")}
+            className="gap-2 rounded-xl"
+            data-testid="button-calendar-view"
+          >
+            <CalendarDays className="h-4 w-4" />
+            カレンダー
+          </Button>
+        </div>
         {hasActiveFilters && (
           <Button
             variant="ghost"
@@ -79,7 +122,32 @@ export function EventFiltersComponent({ filters, onFiltersChange, filterOptions 
       </div>
 
       {isExpanded && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-6 bg-muted/40 rounded-2xl">
+        <div className="space-y-4 p-6 bg-muted/40 rounded-2xl">
+          <div className="space-y-2">
+            <Label className="text-sm text-muted-foreground">日付</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal rounded-xl"
+                  data-testid="button-date-range"
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {formatDateRange()}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  selected={filters.dateRange}
+                  onSelect={(range) => onFiltersChange({ ...filters, dateRange: range })}
+                  numberOfMonths={isMobile ? 1 : 2}
+                  locale={ja}
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-2">
             <Label className="text-sm text-muted-foreground">大学</Label>
             <Select
@@ -161,6 +229,7 @@ export function EventFiltersComponent({ filters, onFiltersChange, filterOptions 
               className="py-2"
               data-testid="slider-solo-friendliness"
             />
+          </div>
           </div>
         </div>
       )}

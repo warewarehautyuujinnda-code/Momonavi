@@ -1,9 +1,10 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "wouter";
 import { Layout } from "@/components/layout/layout";
 import { EventCard } from "@/components/events/event-card";
-import { EventFiltersComponent, type EventFilters } from "@/components/events/event-filters";
+import { EventFiltersComponent, type EventFilters, type ViewMode } from "@/components/events/event-filters";
+import { EventCalendarView } from "@/components/events/event-calendar-view";
 import { MasonryGrid } from "@/components/ui/masonry-grid";
 import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,11 +16,13 @@ export default function EventsPage() {
   const urlParams = new URLSearchParams(searchParams);
   const initialUniversity = urlParams.get("university");
 
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [filters, setFilters] = useState<EventFilters>({
     university: initialUniversity,
     category: null,
     atmosphereTag: null,
     minSoloFriendliness: 1,
+    dateRange: undefined,
   });
 
   const { data: events, isLoading } = useQuery<EventWithGroup[]>({
@@ -53,6 +56,22 @@ export default function EventsPage() {
       if (event.soloFriendliness < filters.minSoloFriendliness) {
         return false;
       }
+      if (filters.dateRange?.from) {
+        const eventDate = new Date(event.date);
+        eventDate.setHours(0, 0, 0, 0);
+        const from = new Date(filters.dateRange.from);
+        from.setHours(0, 0, 0, 0);
+        if (eventDate < from) {
+          return false;
+        }
+        if (filters.dateRange.to) {
+          const to = new Date(filters.dateRange.to);
+          to.setHours(23, 59, 59, 999);
+          if (eventDate > to) {
+            return false;
+          }
+        }
+      }
       return true;
     }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   }, [events, filters]);
@@ -75,6 +94,8 @@ export default function EventsPage() {
             filters={filters} 
             onFiltersChange={setFilters}
             filterOptions={filterOptions}
+            viewMode={viewMode}
+            onViewModeChange={setViewMode}
           />
 
           {isLoading ? (
@@ -83,6 +104,8 @@ export default function EventsPage() {
                 <Skeleton key={i} className="h-72 rounded-2xl" />
               ))}
             </div>
+          ) : viewMode === "calendar" ? (
+            <EventCalendarView events={filteredEvents} />
           ) : filteredEvents.length === 0 ? (
             <div className="text-center py-20 space-y-4">
               <SearchX className="h-12 w-12 text-muted-foreground/50 mx-auto" />
