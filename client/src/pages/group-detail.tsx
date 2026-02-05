@@ -3,45 +3,18 @@ import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/layout";
 import { EventCard } from "@/components/events/event-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { 
   ChevronLeft,
   Users,
   Calendar,
   Clock,
-  HelpCircle,
   ExternalLink,
 } from "lucide-react";
 import { SiInstagram, SiX, SiLine } from "react-icons/si";
 import type { GroupWithEvents, EventWithGroup } from "@shared/schema";
-
-interface FAQ {
-  question: string;
-  answer: string;
-}
-
-const defaultFAQs: FAQ[] = [
-  {
-    question: "未経験でも入れますか？",
-    answer: "はい、未経験者も大歓迎です！先輩が丁寧に教えますので、安心してご参加ください。",
-  },
-  {
-    question: "新入生はどのくらいいますか？",
-    answer: "毎年多くの新入生が入会しています。同期の仲間と一緒に活動を始められます。",
-  },
-  {
-    question: "活動に必要な費用は？",
-    answer: "部費や活動に必要な道具代などは、新歓イベントで詳しくお伝えします。",
-  },
-];
 
 export default function GroupDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -87,10 +60,6 @@ export default function GroupDetailPage() {
   const upcomingEvents = events?.filter(
     (e) => new Date(e.date) > new Date()
   ) || [];
-
-  const parsedFAQs: FAQ[] = group.faqs 
-    ? JSON.parse(group.faqs) 
-    : defaultFAQs;
 
   const hasExternalLinks = group.instagramUrl || group.twitterUrl || group.lineUrl;
 
@@ -226,31 +195,6 @@ export default function GroupDetailPage() {
                   </div>
                 </>
               )}
-            </CardContent>
-          </Card>
-
-          <Card className="rounded-2xl border-0 shadow-sm">
-            <CardHeader className="p-6 sm:p-8 pb-0">
-              <CardTitle className="text-xl flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                  <HelpCircle className="h-5 w-5 text-primary" />
-                </div>
-                よくある質問
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 sm:p-8 pt-4">
-              <Accordion type="single" collapsible className="w-full">
-                {parsedFAQs.map((faq, index) => (
-                  <AccordionItem key={index} value={`faq-${index}`} className="border-b-0">
-                    <AccordionTrigger className="text-left hover:no-underline py-4">
-                      {faq.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-muted-foreground pb-4">
-                      {faq.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
             </CardContent>
           </Card>
 
