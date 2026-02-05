@@ -7,8 +7,8 @@ import heroImage from "@/assets/images/hero-students.jpg";
 const reasons = [
   {
     icon: Users,
-    title: "1人でも行きやすい新歓が見つかる",
-    description: "「1人参加しやすさ」で安心度がひと目でわかります",
+    title: "イベントを中心とした検索機能",
+    description: "ばらばらになった情報を整理します",
   },
   {
     icon: MessageCircle,
