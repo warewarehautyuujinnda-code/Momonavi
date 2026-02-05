@@ -14,7 +14,7 @@ export function Footer() {
       href: "https://notion.so/shinkan-navi", 
       label: "Notion", 
       icon: BookOpen,
-      description: "運営情報・更新ログ"
+      description: "運営情報・申請方法等"
     },
   ];
 
