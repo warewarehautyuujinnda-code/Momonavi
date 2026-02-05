@@ -235,15 +235,13 @@ export async function writeContactToNotion(contact: {
     const dbId = extractDatabaseId(process.env.NOTION_CONTACT_URL!);
     
     const properties: any = {
-      "種別": { select: { name: contact.type } },
-      "連絡先": { email: contact.contactMethod },
+      "名前": { title: [{ text: { content: `${contact.type} - ${contact.name || "匿名"}` } }] },
+      "種別": { rich_text: [{ text: { content: contact.type } }] },
+      "メール": { email: contact.contactMethod },
       "内容": { rich_text: [{ text: { content: contact.content.slice(0, 2000) } }] },
     };
     
     // Add optional fields
-    if (contact.name) {
-      properties["名前"] = { rich_text: [{ text: { content: contact.name } }] };
-    }
     if (contact.university) {
       properties["大学"] = { rich_text: [{ text: { content: contact.university } }] };
     }
