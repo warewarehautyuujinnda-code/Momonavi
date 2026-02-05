@@ -149,6 +149,37 @@ server/
 - rounded-2xl, shadow-sm を基本としたカードデザイン
 - container-narrow でコンテンツ幅を制限
 
+### フォント
+- 本文: Inter + Noto Sans JP
+- 見出し（ワクワク感）: M PLUS Rounded 1c (`font-rounded` クラス)
+
+### スクロールアニメーション（Reveal Animation）
+スクロールで要素が表示領域に入ったタイミングで、テキストが「少し遅れて」「徐々に」「滑らかに」現れる演出。
+
+**使い方**: `data-reveal` 属性を付けるだけで動作
+
+```html
+<!-- 文字ごとにstagger -->
+<h1 data-reveal="stagger" data-reveal-stagger="30">見出しテキスト</h1>
+
+<!-- 単語ごとにstagger -->
+<p data-reveal="stagger-word" data-reveal-stagger="60">本文テキスト</p>
+
+<!-- シンプルなフェード + スライド -->
+<div data-reveal="fade" data-reveal-delay="200">コンテンツ</div>
+```
+
+**オプション（data属性）**:
+- `data-reveal-delay="200"` : アニメーション開始までの遅延（ms）
+- `data-reveal-stagger="30"` : 文字/単語間の遅延（ms）
+- `data-reveal-once="false"` : falseで再入場時に再アニメーション
+
+**技術詳細**:
+- lib/reveal.ts: IntersectionObserver で要素を監視
+- Layout.tsx で初期化 + MutationObserver で動的要素も対応
+- prefers-reduced-motion 対応（アニメーション無効化）
+- CSS: cubic-bezier(0.34, 1.56, 0.64, 1) でバウンス感のあるイージング
+
 ## 荒らし対策
 - URL・スパムパターンの検出
 - 投稿時の注意喚起UI
