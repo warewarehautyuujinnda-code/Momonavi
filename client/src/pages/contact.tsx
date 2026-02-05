@@ -130,6 +130,7 @@ export default function ContactPage() {
   });
 
   const contactType = form.watch("type");
+  const selectedUniversity = form.watch("university");
 
   const mutation = useMutation({
     mutationFn: async (data: ContactFormData) => {
@@ -245,8 +246,14 @@ export default function ContactPage() {
                   <div className="space-y-2">
                     <Label htmlFor="university">大学（任意）</Label>
                     <Select
-                      value={form.watch("university")}
-                      onValueChange={(value) => form.setValue("university", value)}
+                      value={selectedUniversity?.startsWith("その他:") ? "その他" : selectedUniversity || ""}
+                      onValueChange={(value) => {
+                        if (value === "その他") {
+                          form.setValue("university", "その他:");
+                        } else {
+                          form.setValue("university", value);
+                        }
+                      }}
                     >
                       <SelectTrigger className="rounded-xl" data-testid="select-university">
                         <SelectValue placeholder="選択してください" />
@@ -257,8 +264,18 @@ export default function ContactPage() {
                             {uni}
                           </SelectItem>
                         ))}
+                        <SelectItem value="その他">その他</SelectItem>
                       </SelectContent>
                     </Select>
+                    {selectedUniversity?.startsWith("その他") && (
+                      <Input
+                        placeholder="大学名を入力してください"
+                        className="rounded-xl mt-2"
+                        value={selectedUniversity.replace("その他:", "")}
+                        onChange={(e) => form.setValue("university", `その他:${e.target.value}`)}
+                        data-testid="input-university-other"
+                      />
+                    )}
                   </div>
                 </div>
 
