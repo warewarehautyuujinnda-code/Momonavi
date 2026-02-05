@@ -235,7 +235,8 @@ export async function writeContactToNotion(contact: {
     const dbId = extractDatabaseId(process.env.NOTION_CONTACT_URL!);
     
     const properties: any = {
-      "名前": { title: [{ text: { content: `${contact.type} - ${contact.name || "匿名"}` } }] },
+      "お問い合わせ": { title: [{ text: { content: `${contact.type} - ${contact.name || "匿名"}` } }] },
+      "名前": { rich_text: [{ text: { content: contact.name || "匿名" } }] },
       "種別": { rich_text: [{ text: { content: contact.type } }] },
       "メール": { email: contact.contactMethod },
       "内容": { rich_text: [{ text: { content: contact.content.slice(0, 2000) } }] },
