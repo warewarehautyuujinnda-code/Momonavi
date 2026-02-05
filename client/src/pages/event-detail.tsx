@@ -289,7 +289,7 @@ export default function EventDetailPage() {
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-semibold">{event.location}</p>
                       <a
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
+                        href={event.mapUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-sm text-primary hover:underline flex items-center gap-1"

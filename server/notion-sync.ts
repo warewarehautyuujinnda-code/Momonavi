@@ -237,6 +237,7 @@ export async function syncEventsFromNotion(): Promise<{ synced: number; errors: 
           participationFlow: getNotionText(props["参加の流れ"] || props["Flow"]) || null,
           maxParticipants: getNotionNumber(props["定員"] || props["MaxParticipants"]) || null,
           imageUrl: getNotionText(props["画像URL"] || props["Image"]) || null,
+          mapUrl: getNotionText(props["map URL"] || props["mapURL"] || props["MapURL"] || props["地図URL"]) || null,
         };
         
         // Upsert

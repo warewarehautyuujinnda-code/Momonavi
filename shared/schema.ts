@@ -63,6 +63,7 @@ export const events = pgTable("events", {
   participationFlow: text("participation_flow"),
   maxParticipants: integer("max_participants"),
   imageUrl: text("image_url"),
+  mapUrl: text("map_url"),
   status: text("status").notNull().default('approved'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
