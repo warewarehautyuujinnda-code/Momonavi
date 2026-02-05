@@ -1,7 +1,7 @@
 // Notion Sync - Fetch data from Notion and sync to PostgreSQL
 import { getNotionClient, extractDatabaseId } from "./notion";
 import { db } from "./db";
-import { groups, events } from "@shared/schema";
+import { groups, events, articles } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 // Helper to get text from Notion property
@@ -267,10 +267,79 @@ export async function writeContactToNotion(contact: {
   }
 }
 
+// Fetch and sync articles from Notion
+export async function syncArticlesFromNotion(): Promise<{ synced: number; errors: string[] }> {
+  if (!process.env.NOTION_ARTICLE_URL) {
+    return { synced: 0, errors: ["NOTION_ARTICLE_URL is not set"] };
+  }
+  
+  const notion = await getNotionClient();
+  const dbId = extractDatabaseId(process.env.NOTION_ARTICLE_URL);
+  
+  const errors: string[] = [];
+  let synced = 0;
+  
+  try {
+    const response = await notion.databases.query({
+      database_id: dbId,
+    });
+    
+    console.log(`Found ${response.results.length} articles in Notion`);
+    
+    for (const page of response.results) {
+      try {
+        const props = (page as any).properties;
+        const notionId = page.id.replace(/-/g, "");
+        
+        // Log available properties for debugging
+        if (synced === 0) {
+          console.log("Article properties:", Object.keys(props));
+        }
+        
+        // Parse published date
+        const publishedDate = getNotionDate(props["公開日"] || props["PublishedAt"] || props["Date"]);
+        if (!publishedDate) {
+          errors.push(`Article ${notionId}: Missing published date, skipping (公開日を設定してください)`);
+          continue;
+        }
+        
+        const articleData = {
+          id: notionId,
+          title: getNotionText(props["タイトル"] || props["Title"] || props["名前"]) || "Untitled",
+          summary: getNotionText(props["要約"] || props["Summary"]) || "",
+          content: getNotionText(props["本文"] || props["Content"]) || "",
+          category: "",
+          tags: getNotionMultiSelect(props["タグ"] || props["Tags"]) || [],
+          imageUrl: getNotionText(props["画像URL"] || props["Image"]) || null,
+          publishedAt: publishedDate,
+        };
+        
+        // Upsert
+        const existing = await db.select().from(articles).where(eq(articles.id, notionId));
+        
+        if (existing.length > 0) {
+          await db.update(articles).set(articleData).where(eq(articles.id, notionId));
+        } else {
+          await db.insert(articles).values(articleData);
+        }
+        
+        synced++;
+      } catch (err: any) {
+        errors.push(`Article ${page.id}: ${err.message}`);
+      }
+    }
+  } catch (err: any) {
+    errors.push(`Database query failed: ${err.message}`);
+  }
+  
+  return { synced, errors };
+}
+
 // Sync all data from Notion
 export async function syncAllFromNotion(): Promise<{
   groups: { synced: number; errors: string[] };
   events: { synced: number; errors: string[] };
+  articles: { synced: number; errors: string[] };
 }> {
   console.log("Starting Notion sync...");
   
@@ -280,8 +349,12 @@ export async function syncAllFromNotion(): Promise<{
   const eventsResult = await syncEventsFromNotion();
   console.log(`Events sync: ${eventsResult.synced} synced, ${eventsResult.errors.length} errors`);
   
+  const articlesResult = await syncArticlesFromNotion();
+  console.log(`Articles sync: ${articlesResult.synced} synced, ${articlesResult.errors.length} errors`);
+  
   return {
     groups: groupsResult,
     events: eventsResult,
+    articles: articlesResult,
   };
 }

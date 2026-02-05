@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { getNotionClient, extractDatabaseId, testDatabaseConnection } from "./notion";
-import { syncAllFromNotion, syncGroupsFromNotion, syncEventsFromNotion, writeContactToNotion } from "./notion-sync";
+import { syncAllFromNotion, syncGroupsFromNotion, syncEventsFromNotion, syncArticlesFromNotion, writeContactToNotion } from "./notion-sync";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -219,6 +219,17 @@ export async function registerRoutes(
       res.json({ success: true, ...result });
     } catch (error: any) {
       console.error("Notion events sync error:", error);
+      res.status(500).json({ success: false, error: error.message });
+    }
+  });
+
+  // Sync articles from Notion (requires auth)
+  app.post("/api/notion/sync/articles", adminAuth, async (req, res) => {
+    try {
+      const result = await syncArticlesFromNotion();
+      res.json({ success: true, ...result });
+    } catch (error: any) {
+      console.error("Notion articles sync error:", error);
       res.status(500).json({ success: false, error: error.message });
     }
   });

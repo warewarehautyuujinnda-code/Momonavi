@@ -94,7 +94,7 @@ export const articles = pgTable("articles", {
   title: text("title").notNull(),
   summary: text("summary").notNull(),
   content: text("content").notNull(),
-  category: text("category").notNull(),
+  category: text("category").notNull().default(""),
   tags: text("tags").array().notNull(),
   imageUrl: text("image_url"),
   publishedAt: timestamp("published_at").notNull(),
