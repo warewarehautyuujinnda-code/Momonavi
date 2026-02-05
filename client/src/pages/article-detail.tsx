@@ -5,57 +5,16 @@ import { Layout } from "@/components/layout/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Calendar, BookOpen } from "lucide-react";
+import { ArrowLeft, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { Article } from "@shared/schema";
+import ReactMarkdown from "react-markdown";
 
 function ArticleContent({ content }: { content: string }) {
-  const paragraphs = content.split('\n\n');
-  
   return (
-    <div className="prose prose-gray dark:prose-invert max-w-none">
-      {paragraphs.map((paragraph, index) => {
-        if (paragraph.startsWith('## ')) {
-          return (
-            <h2 key={index} className="text-xl font-bold mt-8 mb-4 first:mt-0">
-              {paragraph.replace('## ', '')}
-            </h2>
-          );
-        }
-        if (paragraph.startsWith('### ')) {
-          return (
-            <h3 key={index} className="text-lg font-semibold mt-6 mb-3">
-              {paragraph.replace('### ', '')}
-            </h3>
-          );
-        }
-        if (paragraph.includes('\n')) {
-          return (
-            <div key={index} className="space-y-2">
-              {paragraph.split('\n').map((line, lineIndex) => {
-                if (line.startsWith('- ') || line.match(/^\d+\./)) {
-                  return (
-                    <p key={lineIndex} className="pl-4 text-muted-foreground">
-                      {line}
-                    </p>
-                  );
-                }
-                return (
-                  <p key={lineIndex} className="text-muted-foreground leading-relaxed">
-                    {line}
-                  </p>
-                );
-              })}
-            </div>
-          );
-        }
-        return (
-          <p key={index} className="text-muted-foreground leading-relaxed mb-4">
-            {paragraph}
-          </p>
-        );
-      })}
+    <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:font-bold prose-h1:text-2xl prose-h1:mt-8 prose-h1:mb-4 prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4 prose-li:text-muted-foreground prose-strong:text-foreground prose-a:text-primary prose-a:underline hover:prose-a:no-underline first:prose-headings:mt-0">
+      <ReactMarkdown>{content}</ReactMarkdown>
     </div>
   );
 }
