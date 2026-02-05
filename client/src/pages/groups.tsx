@@ -1,7 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/layout";
 import { GroupCard } from "@/components/groups/group-card";
+import { MasonryGrid } from "@/components/ui/masonry-grid";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -207,10 +208,26 @@ export default function GroupsPage() {
               <p className="text-sm text-muted-foreground">
                 {filteredGroups.length}件の団体
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredGroups.map((group) => (
-                  <GroupCard key={group.id} group={group} />
-                ))}
+              <div className="hidden lg:block">
+                <MasonryGrid columns={3} gap={6}>
+                  {filteredGroups.map((group) => (
+                    <GroupCard key={group.id} group={group} />
+                  ))}
+                </MasonryGrid>
+              </div>
+              <div className="hidden sm:block lg:hidden">
+                <MasonryGrid columns={2} gap={5}>
+                  {filteredGroups.map((group) => (
+                    <GroupCard key={group.id} group={group} />
+                  ))}
+                </MasonryGrid>
+              </div>
+              <div className="block sm:hidden">
+                <MasonryGrid columns={1} gap={4}>
+                  {filteredGroups.map((group) => (
+                    <GroupCard key={group.id} group={group} />
+                  ))}
+                </MasonryGrid>
               </div>
             </div>
           )}

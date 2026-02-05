@@ -1,9 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "wouter";
 import { Layout } from "@/components/layout/layout";
 import { EventCard } from "@/components/events/event-card";
 import { EventFiltersComponent, type EventFilters } from "@/components/events/event-filters";
+import { MasonryGrid } from "@/components/ui/masonry-grid";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SearchX } from "lucide-react";
 import type { EventWithGroup } from "@shared/schema";
@@ -97,10 +98,26 @@ export default function EventsPage() {
               <p className="text-sm text-muted-foreground">
                 {filteredEvents.length}件のイベント
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredEvents.map((event) => (
-                  <EventCard key={event.id} event={event} />
-                ))}
+              <div className="hidden lg:block">
+                <MasonryGrid columns={3} gap={6}>
+                  {filteredEvents.map((event) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </MasonryGrid>
+              </div>
+              <div className="hidden sm:block lg:hidden">
+                <MasonryGrid columns={2} gap={5}>
+                  {filteredEvents.map((event) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </MasonryGrid>
+              </div>
+              <div className="block sm:hidden">
+                <MasonryGrid columns={1} gap={4}>
+                  {filteredEvents.map((event) => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </MasonryGrid>
               </div>
             </div>
           )}
