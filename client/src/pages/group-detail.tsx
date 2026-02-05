@@ -146,55 +146,57 @@ export default function GroupDetailPage() {
                 </>
               )}
 
-              {hasExternalLinks && (
-                <>
-                  <div className="h-px bg-border" />
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">団体の公式リンク</p>
-                    <div className="flex flex-wrap gap-3">
-                      {group.instagramUrl && (
-                        <a
-                          href={group.instagramUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-muted hover-elevate rounded-xl text-sm font-medium"
-                          data-testid="link-instagram"
-                        >
-                          <SiInstagram className="h-4 w-4" />
-                          Instagram
-                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                        </a>
-                      )}
-                      {group.twitterUrl && (
-                        <a
-                          href={group.twitterUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-muted hover-elevate rounded-xl text-sm font-medium"
-                          data-testid="link-twitter"
-                        >
-                          <SiX className="h-4 w-4" />
-                          X (Twitter)
-                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                        </a>
-                      )}
-                      {group.lineUrl && (
-                        <a
-                          href={group.lineUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 bg-muted hover-elevate rounded-xl text-sm font-medium"
-                          data-testid="link-line"
-                        >
-                          <SiLine className="h-4 w-4" />
-                          LINE
-                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                        </a>
-                      )}
-                    </div>
+              <div className="h-px bg-border" />
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">団体の公式リンク</p>
+                {hasExternalLinks ? (
+                  <div className="flex flex-wrap gap-3">
+                    {group.instagramUrl && (
+                      <a
+                        href={group.instagramUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-muted hover-elevate rounded-xl text-sm font-medium"
+                        data-testid="link-instagram"
+                      >
+                        <SiInstagram className="h-4 w-4" />
+                        Instagram
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      </a>
+                    )}
+                    {group.twitterUrl && (
+                      <a
+                        href={group.twitterUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-muted hover-elevate rounded-xl text-sm font-medium"
+                        data-testid="link-twitter"
+                      >
+                        <SiX className="h-4 w-4" />
+                        X (Twitter)
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      </a>
+                    )}
+                    {group.lineUrl && (
+                      <a
+                        href={group.lineUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-muted hover-elevate rounded-xl text-sm font-medium"
+                        data-testid="link-line"
+                      >
+                        <SiLine className="h-4 w-4" />
+                        LINE
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      </a>
+                    )}
                   </div>
-                </>
-              )}
+                ) : (
+                  <p className="text-sm text-muted-foreground italic" data-testid="text-no-links">
+                    あれ？URLが逃げちゃった...🏃💨 まだ準備中みたいです！
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
 
