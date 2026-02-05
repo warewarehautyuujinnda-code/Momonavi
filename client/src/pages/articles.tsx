@@ -23,9 +23,11 @@ function ArticleCard({ article }: { article: Article }) {
         </div>
         <CardContent className="p-5 space-y-3">
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="rounded-lg text-xs">
-              {article.category}
-            </Badge>
+            {article.category && (
+              <Badge variant="secondary" className="rounded-lg text-xs">
+                {article.category}
+              </Badge>
+            )}
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Calendar className="h-3 w-3" />
               {format(publishedDate, "M月d日", { locale: ja })}
@@ -77,9 +79,6 @@ export default function ArticlesPage() {
     queryKey: ["/api/articles"],
   });
 
-  const aruaruArticles = articles?.filter(a => a.category === "あるある") || [];
-  const omoiArticles = articles?.filter(a => a.category === "想い") || [];
-
   return (
     <Layout>
       <div className="container-narrow py-12 sm:py-16 space-y-12">
@@ -96,41 +95,15 @@ export default function ArticlesPage() {
               <ArticleSkeleton key={i} />
             ))}
           </div>
+        ) : articles && articles.length > 0 ? (
+          <div className="grid sm:grid-cols-2 gap-6">
+            {articles.map((article) => (
+              <ArticleCard key={article.id} article={article} />
+            ))}
+          </div>
         ) : (
-          <div className="space-y-12">
-            {aruaruArticles.length > 0 && (
-              <section className="space-y-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <span className="h-1 w-4 bg-primary rounded-full" />
-                  サークル・部活あるある
-                </h2>
-                <div className="grid sm:grid-cols-2 gap-6">
-                  {aruaruArticles.map((article) => (
-                    <ArticleCard key={article.id} article={article} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {omoiArticles.length > 0 && (
-              <section className="space-y-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <span className="h-1 w-4 bg-primary rounded-full" />
-                  筆者の想い
-                </h2>
-                <div className="grid sm:grid-cols-2 gap-6">
-                  {omoiArticles.map((article) => (
-                    <ArticleCard key={article.id} article={article} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {articles?.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground">
-                記事はまだありません
-              </div>
-            )}
+          <div className="text-center py-12 text-muted-foreground">
+            記事はまだありません
           </div>
         )}
       </div>
