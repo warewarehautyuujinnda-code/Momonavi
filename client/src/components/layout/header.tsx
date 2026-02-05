@@ -21,7 +21,7 @@ export function Header() {
       <div className="container-narrow">
         <div className="flex h-16 items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 hover-elevate rounded-xl px-3 py-2 -mx-3" data-testid="link-home">
-            <img src={logoImg} alt="MOMONAVI" className="h-8 w-auto" />
+            <img src={logoImg} alt="MOMONAVI" className="h-12 w-auto" />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
