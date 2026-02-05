@@ -13,9 +13,14 @@ import ReactMarkdown from "react-markdown";
 import remarkBreaks from "remark-breaks";
 
 function ArticleContent({ content }: { content: string }) {
+  // Preprocess content to add blank lines before headings for proper Markdown parsing
+  const processedContent = content
+    .replace(/\n(#{1,3} )/g, '\n\n$1')  // Add blank line before headings
+    .replace(/^(#{1,3} )/g, '$1');       // Keep heading at start as is
+  
   return (
     <div className="prose prose-gray dark:prose-invert max-w-none prose-headings:font-bold prose-h1:text-2xl prose-h1:mt-8 prose-h1:mb-4 prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-h3:text-lg prose-h3:mt-6 prose-h3:mb-3 prose-p:text-muted-foreground prose-p:leading-relaxed prose-p:mb-4 prose-li:text-muted-foreground prose-strong:text-foreground first:prose-headings:mt-0">
-      <ReactMarkdown remarkPlugins={[remarkBreaks]}>{content}</ReactMarkdown>
+      <ReactMarkdown remarkPlugins={[remarkBreaks]}>{processedContent}</ReactMarkdown>
     </div>
   );
 }
