@@ -84,20 +84,12 @@ export default function HomePage() {
         <div className="container-narrow">
           <div className="text-center mb-16">
             <h2 
-              className="text-2xl sm:text-3xl font-bold mb-4 font-rounded"
+              className="text-2xl sm:text-3xl font-bold font-rounded"
               data-reveal="stagger"
               data-reveal-stagger="35"
             >
               安心の3要素
             </h2>
-            <p 
-              className="text-muted-foreground"
-              data-reveal="stagger-word"
-              data-reveal-stagger="80"
-              data-reveal-delay="200"
-            >
-              新歓ナビだからできること
-            </p>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 sm:gap-10">
