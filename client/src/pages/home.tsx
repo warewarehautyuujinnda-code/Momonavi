@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Layout } from "@/components/layout/layout";
 import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { ArrowRight, Users, MessageCircle, MapPin } from "lucide-react";
-import heroImage from "@/assets/images/hero-students.jpg";
+import heroImage from "@assets/image_1770376446693.png";
 import momonaviLogo from "@/assets/images/momonavi-logo.png";
 
 const reasons = [
