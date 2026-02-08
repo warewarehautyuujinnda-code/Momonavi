@@ -1,0 +1,120 @@
+2026-02-08 13:32:24.66
+ee70fbea
+User
+internalPosition: undefined,
+2026-02-08 13:32:24.66
+ee70fbea
+User
+at /home/runner/workspace/dist/index.cjs:68:13326
+2026-02-08 13:32:24.66
+ee70fbea
+User
+detail: undefined,
+2026-02-08 13:32:24.66
+ee70fbea
+User
+constraint: undefined,
+2026-02-08 13:32:24.66
+ee70fbea
+User
+at async /home/runner/workspace/dist/index.cjs:74:117589 {
+2026-02-08 13:32:24.66
+ee70fbea
+User
+4:32:24 AM [express] GET /api/groups 500 in 261ms :: {"error":"Failed to fetch groups"}
+2026-02-08 13:32:30.32
+ee70fbea
+User
+column: undefined,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+position: '213',
+2026-02-08 13:32:30.32
+ee70fbea
+User
+code: '42703',
+2026-02-08 13:32:30.32
+ee70fbea
+User
+at async Dd.getEvents (/home/runner/workspace/dist/index.cjs:74:104472)
+2026-02-08 13:32:30.32
+ee70fbea
+User
+at async /home/runner/workspace/dist/index.cjs:74:115881 {
+2026-02-08 13:32:30.32
+ee70fbea
+User
+at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+2026-02-08 13:32:30.32
+ee70fbea
+User
+internalQuery: undefined,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+constraint: undefined,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+schema: undefined,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+routine: 'errorMissingColumn'
+2026-02-08 13:32:30.32
+ee70fbea
+User
+at async /home/runner/workspace/dist/index.cjs:74:31364
+2026-02-08 13:32:30.32
+ee70fbea
+User
+table: undefined,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+}
+2026-02-08 13:32:30.32
+ee70fbea
+User
+line: '3729',
+2026-02-08 13:32:30.32
+ee70fbea
+User
+severity: 'ERROR',
+2026-02-08 13:32:30.32
+ee70fbea
+User
+length: 171,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+detail: undefined,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+file: 'parse_relation.c',
+2026-02-08 13:32:30.32
+ee70fbea
+User
+dataType: undefined,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+where: undefined,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+internalPosition: undefined,
+2026-02-08 13:32:30.32
+ee70fbea
+User
+hint: 'Perhaps you meant to reference the column "events.image_url".',
+2026-02-08 13:32:30.32
+ee70fbea
+User
+at /home/runner/workspace/dist/index.cjs:68:13326
+2026-02-08 13:32:30.32
+ee70fbea
+User
+Error fetching events: error: column "map_url" does not exist
