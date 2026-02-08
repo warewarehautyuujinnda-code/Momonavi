@@ -4,6 +4,16 @@ import { syncAllFromNotion } from "./notion-sync";
 export function startScheduler() {
   console.log("Starting scheduler for Notion sync...");
   
+  setTimeout(async () => {
+    console.log(`[${new Date().toISOString()}] Running initial Notion sync on startup...`);
+    try {
+      const result = await syncAllFromNotion();
+      console.log(`[${new Date().toISOString()}] Initial sync completed:`, JSON.stringify(result, null, 2));
+    } catch (error) {
+      console.error(`[${new Date().toISOString()}] Initial sync failed:`, error);
+    }
+  }, 5000);
+
   cron.schedule("0 3 * * *", async () => {
     console.log(`[${new Date().toISOString()}] Starting scheduled Notion sync...`);
     try {
@@ -16,5 +26,5 @@ export function startScheduler() {
     timezone: "Asia/Tokyo"
   });
   
-  console.log("Scheduler started: Notion sync runs daily at 3:00 AM JST");
+  console.log("Scheduler started: Notion sync runs daily at 3:00 AM JST + initial sync on startup");
 }
