@@ -28,6 +28,22 @@ function getNotionText(prop: any): string {
   return "";
 }
 
+// Helper to get file/image URL from Notion property (supports files, url, and text types)
+function getNotionFileUrl(prop: any): string {
+  if (!prop) return "";
+  if (prop.type === "files" && prop.files?.length > 0) {
+    const file = prop.files[0];
+    if (file.type === "file") {
+      return file.file?.url || "";
+    }
+    if (file.type === "external") {
+      return file.external?.url || "";
+    }
+    return file.name || "";
+  }
+  return getNotionText(prop);
+}
+
 // Helper to get number from Notion property
 function getNotionNumber(prop: any): number | null {
   if (!prop || prop.type !== "number") return null;
@@ -236,7 +252,7 @@ export async function syncEventsFromNotion(): Promise<{ synced: number; errors: 
           atmosphereTags: getNotionMultiSelect(props["雰囲気タグ"] || props["Atmosphere"]) || [],
           participationFlow: getNotionText(props["参加の流れ"] || props["Flow"]) || null,
           maxParticipants: getNotionNumber(props["定員"] || props["MaxParticipants"]) || null,
-          imageUrl: getNotionText(props["画像URL"] || props["Image"]) || null,
+          imageUrl: getNotionFileUrl(props["画像URL"] || props["Image"]) || null,
           mapUrl: getNotionText(props["map URL"] || props["mapURL"] || props["MapURL"] || props["地図URL"]) || null,
         };
         
@@ -360,7 +376,7 @@ export async function syncArticlesFromNotion(): Promise<{ synced: number; errors
           content: getNotionText(props["本文"] || props["Content"]) || "",
           category: "",
           tags: getNotionMultiSelect(props["タグ"] || props["Tags"]) || [],
-          imageUrl: getNotionText(props["画像URL"] || props["Image"]) || null,
+          imageUrl: getNotionFileUrl(props["画像URL"] || props["Image"]) || null,
           publishedAt: publishedDate,
         };
         

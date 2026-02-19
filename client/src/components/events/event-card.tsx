@@ -33,7 +33,7 @@ function getImageForGenre(genre?: string): string {
 
 export function EventCard({ event }: EventCardProps) {
   const eventDate = new Date(event.date);
-  const imageUrl = getImageForGenre(event.group?.genre);
+  const imageUrl = event.imageUrl || getImageForGenre(event.group?.genre);
 
   return (
     <Link href={`/events/${event.id}`} data-testid={`event-card-${event.id}`}>
