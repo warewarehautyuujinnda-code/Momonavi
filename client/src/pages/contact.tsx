@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChangeEvent, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -10,389 +10,204 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Mail, Send, Loader2, ChevronDown, CheckCircle, HelpCircle } from "lucide-react";
+import { Mail, Send, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { universities, contactTypes } from "@shared/schema";
+import { atmosphereTags, genres, groupCategories, universities } from "@shared/schema";
 
-const contactFormSchema = z.object({
-  type: z.enum(contactTypes),
+const generalSchema = z.object({
   name: z.string().max(100).optional(),
-  university: z.string().optional(),
   contactMethod: z.string().min(1, "連絡先を入力してください").max(200),
   content: z.string().min(10, "10文字以上で入力してください").max(2000),
-  eventName: z.string().max(200).optional(),
-  eventDate: z.string().max(100).optional(),
-  eventLocation: z.string().max(200).optional(),
-  eventDescription: z.string().max(2000).optional(),
-  eventImageUrl: z.string().url().optional().or(z.literal("")),
 });
 
-type ContactFormData = z.infer<typeof contactFormSchema>;
+const groupSchema = z.object({
+  name: z.string().min(1).max(200),
+  university: z.string().min(1).max(200),
+  category: z.string().min(1).max(100),
+  genre: z.string().min(1).max(100),
+  description: z.string().min(10).max(2000),
+  atmosphereTags: z.string(),
+  beginnerFriendly: z.boolean().default(true),
+  memberCount: z.string().optional(),
+  foundedYear: z.string().optional(),
+  practiceSchedule: z.string().optional(),
+  faqs: z.string().optional(),
+  contactInfo: z.string().optional(),
+  instagramUrl: z.string().optional(),
+  twitterUrl: z.string().optional(),
+  lineUrl: z.string().optional(),
+  imageUrl: z.string().optional(),
+});
 
-const faqs = [
-  {
-    question: "掲載基準はありますか？",
-    answer: "岡山大学・岡山理科大学・ノートルダム清心女子大学の公認団体、または学生が主体となって活動している団体のイベントを掲載しています。営利目的や宗教勧誘を主とする団体は掲載をお断りする場合があります。"
-  },
-  {
-    question: "どの大学が対象ですか？",
-    answer: "現在は岡山大学、岡山理科大学、ノートルダム清心女子大学の3大学を対象としています。今後対象大学を拡大する可能性もあります。"
-  },
-  {
-    question: "イベント掲載を依頼したいのですが",
-    answer: "サイト下部の公式リンク（Notion）に、掲載依頼の流れや詳しい内容をまとめています。興味のある方は、ぜひご覧ください。"
-  },
-  {
-    question: "個人情報はどう扱われますか？",
-    answer: "お問い合わせいただいた内容は、返信およびサービス改善の目的でのみ使用します。第三者への提供は行いません。"
-  },
-  {
-    question: "団体のリンク（Instagram等）を追加したいのですが",
-    answer: "お問い合わせフォームから団体名とリンクをお知らせください。確認後、団体ページに追加いたします。"
-  }
-];
+const eventSchema = z.object({
+  groupId: z.string().min(1).max(36),
+  title: z.string().min(1).max(200),
+  description: z.string().min(10).max(2000),
+  date: z.string().min(1),
+  endDate: z.string().optional(),
+  location: z.string().min(1).max(200),
+  requirements: z.string().optional(),
+  atmosphereTags: z.string(),
+  participationFlow: z.string().optional(),
+  maxParticipants: z.string().optional(),
+  imageUrl: z.string().optional(),
+  mapUrl: z.string().optional(),
+});
 
-function FAQSection() {
-  const [openItems, setOpenItems] = useState<Set<number>>(new Set());
-
-  const toggleItem = (index: number) => {
-    const newOpenItems = new Set(openItems);
-    if (openItems.has(index)) {
-      newOpenItems.delete(index);
-    } else {
-      newOpenItems.add(index);
-    }
-    setOpenItems(newOpenItems);
-  };
-
-  return (
-    <section className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-          <HelpCircle className="h-5 w-5 text-primary" />
-        </div>
-        <h2 className="text-xl font-bold">よくある質問</h2>
-      </div>
-
-      <div className="space-y-3">
-        {faqs.map((faq, index) => (
-          <Collapsible
-            key={index}
-            open={openItems.has(index)}
-            onOpenChange={() => toggleItem(index)}
-          >
-            <Card className="rounded-2xl border-0 shadow-sm">
-              <CollapsibleTrigger asChild>
-                <button
-                  className="w-full p-5 flex items-center justify-between text-left hover-elevate rounded-2xl"
-                  data-testid={`faq-trigger-${index}`}
-                >
-                  <span className="font-medium pr-4">{faq.question}</span>
-                  <ChevronDown className={`h-5 w-5 text-muted-foreground shrink-0 transition-transform ${openItems.has(index) ? 'rotate-180' : ''}`} />
-                </button>
-              </CollapsibleTrigger>
-              <CollapsibleContent>
-                <div className="px-5 pb-5 pt-0">
-                  <p className="text-muted-foreground leading-relaxed">
-                    {faq.answer}
-                  </p>
-                </div>
-              </CollapsibleContent>
-            </Card>
-          </Collapsible>
-        ))}
-      </div>
-    </section>
-  );
-}
+type GeneralData = z.infer<typeof generalSchema>;
+type GroupData = z.infer<typeof groupSchema>;
+type EventData = z.infer<typeof eventSchema>;
 
 export default function ContactPage() {
   const { toast } = useToast();
-  const [submitted, setSubmitted] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState<"group" | "event" | null>(null);
 
-  const form = useForm<ContactFormData>({
-    resolver: zodResolver(contactFormSchema),
-    defaultValues: {
-      type: "一般",
-      name: "",
-      university: "",
-      contactMethod: "",
-      content: "",
-      eventName: "",
-      eventDate: "",
-      eventLocation: "",
-      eventDescription: "",
-      eventImageUrl: "",
-    },
+  const generalForm = useForm<GeneralData>({ resolver: zodResolver(generalSchema), defaultValues: { name: "", contactMethod: "", content: "" } });
+  const groupForm = useForm<GroupData>({ resolver: zodResolver(groupSchema), defaultValues: { category: groupCategories[0], genre: genres[0], university: universities[0], beginnerFriendly: true, atmosphereTags: "", imageUrl: "" } });
+  const eventForm = useForm<EventData>({ resolver: zodResolver(eventSchema), defaultValues: { atmosphereTags: "", imageUrl: "" } });
+
+  const generalMutation = useMutation({
+    mutationFn: (data: GeneralData) => apiRequest("POST", "/api/contact", { type: "一般", ...data, university: null }),
+    onSuccess: () => toast({ title: "送信完了", description: "お問い合わせを受け付けました。" }),
+    onError: (e: Error) => toast({ title: "送信失敗", description: e.message, variant: "destructive" }),
   });
 
-  const contactType = form.watch("type");
-  const selectedUniversity = form.watch("university");
-
-  const mutation = useMutation({
-    mutationFn: async (data: ContactFormData) => {
-      return apiRequest("POST", "/api/contact", data);
-    },
-    onSuccess: () => {
-      setSubmitted(true);
-      toast({
-        title: "送信完了",
-        description: "お問い合わせありがとうございます。",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "送信に失敗しました",
-        description: error.message || "しばらく待ってから再度お試しください",
-        variant: "destructive",
-      });
-    },
+  const groupMutation = useMutation({
+    mutationFn: (data: GroupData) => apiRequest("POST", "/api/submissions/group", {
+      ...data,
+      atmosphereTags: data.atmosphereTags.split(",").map((v) => v.trim()).filter(Boolean),
+      memberCount: data.memberCount ? Number(data.memberCount) : null,
+      foundedYear: data.foundedYear ? Number(data.foundedYear) : null,
+      instagramUrl: data.instagramUrl || null,
+      twitterUrl: data.twitterUrl || null,
+      lineUrl: data.lineUrl || null,
+      imageUrl: data.imageUrl || null,
+    }),
+    onSuccess: () => toast({ title: "団体申請を送信しました", description: "Notionで承認後にサイトへ反映されます。" }),
+    onError: (e: Error) => toast({ title: "送信失敗", description: e.message, variant: "destructive" }),
   });
 
-  const onSubmit = (data: ContactFormData) => {
-    mutation.mutate(data);
+  const eventMutation = useMutation({
+    mutationFn: (data: EventData) => apiRequest("POST", "/api/submissions/event", {
+      ...data,
+      date: new Date(data.date).toISOString(),
+      endDate: data.endDate ? new Date(data.endDate).toISOString() : null,
+      atmosphereTags: data.atmosphereTags.split(",").map((v) => v.trim()).filter(Boolean),
+      maxParticipants: data.maxParticipants ? Number(data.maxParticipants) : null,
+      mapUrl: data.mapUrl || null,
+      imageUrl: data.imageUrl || null,
+    }),
+    onSuccess: () => toast({ title: "イベント申請を送信しました", description: "Notionで承認後にサイトへ反映されます。" }),
+    onError: (e: Error) => toast({ title: "送信失敗", description: e.message, variant: "destructive" }),
+  });
+
+  const uploadImage = async (event: ChangeEvent<HTMLInputElement>, target: "group" | "event") => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploadingImage(target);
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result;
+          if (typeof result !== "string") return reject(new Error("画像の読み込みに失敗しました"));
+          const payload = result.split(",")[1];
+          if (!payload) return reject(new Error("画像変換に失敗しました"));
+          resolve(payload);
+        };
+        reader.onerror = () => reject(new Error("画像の読み込みに失敗しました"));
+        reader.readAsDataURL(file);
+      });
+      const res = await apiRequest("POST", "/api/uploads/event-image", { fileName: file.name, mimeType: file.type, base64Data: base64 });
+      const data = await res.json();
+      if (target === "group") groupForm.setValue("imageUrl", data.imageUrl, { shouldValidate: true });
+      if (target === "event") eventForm.setValue("imageUrl", data.imageUrl, { shouldValidate: true });
+      toast({ title: "画像アップロード完了" });
+    } catch (e: any) {
+      toast({ title: "画像アップロード失敗", description: e.message, variant: "destructive" });
+    } finally {
+      setIsUploadingImage(null);
+      event.target.value = "";
+    }
   };
-
-  if (submitted) {
-    return (
-      <Layout>
-        <div className="container-narrow py-16">
-          <Card className="rounded-2xl border-0 shadow-sm max-w-lg mx-auto">
-            <CardContent className="p-8 text-center space-y-4">
-              <div className="flex justify-center">
-                <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                  <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-              <h2 className="text-xl font-bold">送信完了しました</h2>
-              <p className="text-muted-foreground">
-                お問い合わせありがとうございます。
-                内容を確認後、必要に応じてご連絡いたします。
-              </p>
-              <Button
-                variant="outline"
-                className="rounded-xl"
-                onClick={() => {
-                  setSubmitted(false);
-                  form.reset();
-                }}
-                data-testid="button-new-inquiry"
-              >
-                新しいお問い合わせ
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
 
   return (
     <Layout>
-      <div className="container-narrow py-12 sm:py-16 space-y-12 relative overflow-hidden">
+      <div className="container-narrow py-12 sm:py-16 space-y-8 relative overflow-hidden">
         <SakuraPetals position="top-left" opacity={0.35} size="md" />
-        <div className="text-center space-y-4 pb-6 border-b relative z-10">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">お問い合わせ</h1>
-          <p className="text-lg text-muted-foreground">
-            ご質問やイベント掲載のご依頼はこちらから
-          </p>
+        <div className="text-center space-y-3">
+          <h1 className="text-3xl font-bold">掲載申請 / お問い合わせ</h1>
+          <p className="text-muted-foreground">申請内容はNotionに送信され、管理人承認後にサイトへ反映されます。</p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-8">
-          <Card className="rounded-2xl border-0 shadow-sm">
-            <CardHeader className="p-6 sm:p-8 pb-0">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Mail className="h-5 w-5 text-primary" />
-                </div>
-                <CardTitle className="text-xl">お問い合わせフォーム</CardTitle>
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader><CardTitle className="flex items-center gap-2"><Mail className="h-4 w-4" />一般お問い合わせ</CardTitle></CardHeader>
+          <CardContent>
+            <form className="space-y-3" onSubmit={generalForm.handleSubmit((d) => generalMutation.mutate(d))}>
+              <Input placeholder="お名前（任意）" {...generalForm.register("name")} />
+              <Input placeholder="連絡先（メール or Instagram）" {...generalForm.register("contactMethod")} />
+              <Textarea placeholder="内容" rows={4} {...generalForm.register("content")} />
+              <Button type="submit" disabled={generalMutation.isPending}>{generalMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}送信</Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader><CardTitle>団体掲載申請（サイト表示項目を直接入力）</CardTitle></CardHeader>
+          <CardContent>
+            <form className="grid sm:grid-cols-2 gap-3" onSubmit={groupForm.handleSubmit((d) => groupMutation.mutate(d))}>
+              <Input placeholder="団体名" {...groupForm.register("name")} />
+              <Input placeholder="大学" {...groupForm.register("university")} />
+              <Input placeholder="区分（部活/サークル）" {...groupForm.register("category")} />
+              <Input placeholder="ジャンル" {...groupForm.register("genre")} />
+              <Input placeholder="雰囲気タグ（カンマ区切り）" {...groupForm.register("atmosphereTags")} className="sm:col-span-2" />
+              <Textarea placeholder="説明" rows={4} {...groupForm.register("description")} className="sm:col-span-2" />
+              <Input placeholder="部員数" {...groupForm.register("memberCount")} />
+              <Input placeholder="設立年" {...groupForm.register("foundedYear")} />
+              <Input placeholder="活動日" {...groupForm.register("practiceSchedule")} className="sm:col-span-2" />
+              <Textarea placeholder="FAQ" rows={3} {...groupForm.register("faqs")} className="sm:col-span-2" />
+              <Input placeholder="連絡先" {...groupForm.register("contactInfo")} className="sm:col-span-2" />
+              <Input placeholder="Instagram URL" {...groupForm.register("instagramUrl")} />
+              <Input placeholder="Twitter/X URL" {...groupForm.register("twitterUrl")} />
+              <Input placeholder="LINE URL" {...groupForm.register("lineUrl")} />
+              <div className="sm:col-span-2 space-y-2">
+                <Label>画像アップロード</Label>
+                <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => uploadImage(e, "group")} />
+                <Input placeholder="画像URL" {...groupForm.register("imageUrl")} />
               </div>
-            </CardHeader>
-            <CardContent className="p-6 sm:p-8 pt-6">
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="type">お問い合わせ種別</Label>
-                  <Select
-                    value={form.watch("type")}
-                    onValueChange={(value) => form.setValue("type", value as typeof contactTypes[number])}
-                  >
-                    <SelectTrigger className="rounded-xl" data-testid="select-type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {contactTypes.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <label className="sm:col-span-2 text-sm flex items-center gap-2"><input type="checkbox" {...groupForm.register("beginnerFriendly")} /> 初心者歓迎</label>
+              <Button type="submit" className="sm:col-span-2" disabled={groupMutation.isPending || isUploadingImage === "group"}>{groupMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}団体申請を送信</Button>
+            </form>
+          </CardContent>
+        </Card>
 
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">お名前 / 団体名（任意）</Label>
-                    <Input
-                      id="name"
-                      placeholder="例: 田中太郎"
-                      className="rounded-xl"
-                      {...form.register("name")}
-                      data-testid="input-name"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="university">大学（任意）</Label>
-                    <Select
-                      value={selectedUniversity?.startsWith("その他:") ? "その他" : selectedUniversity || ""}
-                      onValueChange={(value) => {
-                        if (value === "その他") {
-                          form.setValue("university", "その他:");
-                        } else {
-                          form.setValue("university", value);
-                        }
-                      }}
-                    >
-                      <SelectTrigger className="rounded-xl" data-testid="select-university">
-                        <SelectValue placeholder="選択してください" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {universities.map((uni) => (
-                          <SelectItem key={uni} value={uni}>
-                            {uni}
-                          </SelectItem>
-                        ))}
-                        <SelectItem value="その他">その他</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {selectedUniversity?.startsWith("その他") && (
-                      <Input
-                        placeholder="大学名を入力してください"
-                        className="rounded-xl mt-2"
-                        value={selectedUniversity.replace("その他:", "")}
-                        onChange={(e) => form.setValue("university", `その他:${e.target.value}`)}
-                        data-testid="input-university-other"
-                      />
-                    )}
-                  </div>
-                </div>
+        <Card className="rounded-2xl border-0 shadow-sm">
+          <CardHeader><CardTitle>イベント掲載申請（サイト表示項目を直接入力）</CardTitle></CardHeader>
+          <CardContent>
+            <form className="grid sm:grid-cols-2 gap-3" onSubmit={eventForm.handleSubmit((d) => eventMutation.mutate(d))}>
+              <Input placeholder="団体ID（既存団体ID）" {...eventForm.register("groupId")} className="sm:col-span-2" />
+              <Input placeholder="イベント名" {...eventForm.register("title")} className="sm:col-span-2" />
+              <Textarea placeholder="説明" rows={4} {...eventForm.register("description")} className="sm:col-span-2" />
+              <Input type="datetime-local" {...eventForm.register("date")} />
+              <Input type="datetime-local" {...eventForm.register("endDate")} />
+              <Input placeholder="場所" {...eventForm.register("location")} className="sm:col-span-2" />
+              <Input placeholder="持ち物" {...eventForm.register("requirements")} className="sm:col-span-2" />
+              <Input placeholder="雰囲気タグ（カンマ区切り）" {...eventForm.register("atmosphereTags")} className="sm:col-span-2" />
+              <Textarea placeholder="参加の流れ" rows={3} {...eventForm.register("participationFlow")} className="sm:col-span-2" />
+              <Input placeholder="定員" {...eventForm.register("maxParticipants")} />
+              <Input placeholder="地図URL" {...eventForm.register("mapUrl")} />
+              <div className="sm:col-span-2 space-y-2">
+                <Label>画像アップロード</Label>
+                <Input type="file" accept="image/png,image/jpeg,image/webp" onChange={(e) => uploadImage(e, "event")} />
+                <Input placeholder="画像URL" {...eventForm.register("imageUrl")} />
+              </div>
+              <Button type="submit" className="sm:col-span-2" disabled={eventMutation.isPending || isUploadingImage === "event"}>{eventMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}イベント申請を送信</Button>
+            </form>
+          </CardContent>
+        </Card>
 
-                <div className="space-y-2">
-                  <Label htmlFor="contactMethod">連絡先（メール or Instagram）</Label>
-                  <Input
-                    id="contactMethod"
-                    placeholder="例: example@email.com または @instagram_id"
-                    className="rounded-xl"
-                    {...form.register("contactMethod")}
-                    data-testid="input-contact"
-                  />
-                  {form.formState.errors.contactMethod && (
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors.contactMethod.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="content">お問い合わせ内容</Label>
-                  <Textarea
-                    id="content"
-                    placeholder="お問い合わせ内容を入力してください"
-                    rows={4}
-                    className="rounded-xl resize-none"
-                    {...form.register("content")}
-                    data-testid="textarea-content"
-                  />
-                  {form.formState.errors.content && (
-                    <p className="text-sm text-destructive">
-                      {form.formState.errors.content.message}
-                    </p>
-                  )}
-                </div>
-
-                {contactType === "イベント掲載依頼" && (
-                  <div className="space-y-4 p-4 bg-muted rounded-xl">
-                    <p className="text-sm font-medium">イベント情報（任意）</p>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="eventName">イベント名</Label>
-                        <Input
-                          id="eventName"
-                          placeholder="例: 新歓バレーボール体験会"
-                          className="rounded-xl"
-                          {...form.register("eventName")}
-                          data-testid="input-event-name"
-                        />
-                      </div>
-                      <div className="grid sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="eventDate">日時</Label>
-                          <Input
-                            id="eventDate"
-                            placeholder="例: 4月10日 14:00-16:00"
-                            className="rounded-xl"
-                            {...form.register("eventDate")}
-                            data-testid="input-event-date"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="eventLocation">場所</Label>
-                          <Input
-                            id="eventLocation"
-                            placeholder="例: 岡山大学体育館"
-                            className="rounded-xl"
-                            {...form.register("eventLocation")}
-                            data-testid="input-event-location"
-                          />
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="eventDescription">イベント説明</Label>
-                        <Textarea
-                          id="eventDescription"
-                          placeholder="イベントの詳細を入力してください"
-                          rows={3}
-                          className="rounded-xl resize-none"
-                          {...form.register("eventDescription")}
-                          data-testid="textarea-event-description"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="eventImageUrl">画像URL（任意）</Label>
-                        <Input
-                          id="eventImageUrl"
-                          placeholder="https://..."
-                          className="rounded-xl"
-                          {...form.register("eventImageUrl")}
-                          data-testid="input-event-image"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="w-full gap-2 rounded-xl"
-                  disabled={mutation.isPending}
-                  data-testid="button-submit"
-                >
-                  {mutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Send className="h-4 w-4" />
-                  )}
-                  送信する
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-
-          <FAQSection />
-        </div>
+        <p className="text-sm text-muted-foreground">推奨値: 大学={universities.join(" / ")}・区分={groupCategories.join(" / ")}・ジャンル={genres.join(" / ")}・雰囲気タグ={atmosphereTags.join(" / ")}</p>
       </div>
     </Layout>
   );

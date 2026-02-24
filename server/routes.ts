@@ -3,13 +3,132 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { getNotionClient, extractDatabaseId, testDatabaseConnection } from "./notion";
-import { syncAllFromNotion, syncGroupsFromNotion, syncEventsFromNotion, syncArticlesFromNotion, writeContactToNotion } from "./notion-sync";
+import { syncAllFromNotion, syncGroupsFromNotion, syncEventsFromNotion, syncArticlesFromNotion, writeContactToNotion, writeGroupSubmissionToNotion, writeEventSubmissionToNotion } from "./notion-sync";
+import { mkdir, writeFile } from "fs/promises";
+import path from "path";
+import { randomUUID } from "crypto";
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+
+  app.post("/api/uploads/event-image", async (req, res) => {
+    try {
+      const uploadSchema = z.object({
+        fileName: z.string().min(1).max(200),
+        mimeType: z.enum(["image/png", "image/jpeg", "image/webp"]),
+        base64Data: z.string().min(1),
+      });
+
+      const { fileName, mimeType, base64Data } = uploadSchema.parse(req.body);
+      const buffer = Buffer.from(base64Data, "base64");
+
+      if (buffer.length > 5 * 1024 * 1024) {
+        return res.status(400).json({ error: "画像サイズは5MB以下にしてください" });
+      }
+
+      const ext = mimeType === "image/png" ? "png" : mimeType === "image/webp" ? "webp" : "jpg";
+      const safeName = path.basename(fileName).replace(/[^a-zA-Z0-9_.-]/g, "_");
+      const generatedName = `${Date.now()}-${randomUUID()}-${safeName}.${ext}`;
+      const uploadDir = path.join(process.cwd(), "attached_assets", "submissions");
+      await mkdir(uploadDir, { recursive: true });
+      await writeFile(path.join(uploadDir, generatedName), buffer);
+
+      res.status(201).json({ imageUrl: `/uploads/submissions/${generatedName}` });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input", details: error.errors });
+      }
+      console.error("Error uploading image:", error);
+      res.status(500).json({ error: "Failed to upload image" });
+    }
+  });
   
+
+  app.post("/api/submissions/group", async (req, res) => {
+    try {
+      const schema = z.object({
+        name: z.string().min(1).max(200),
+        university: z.string().min(1).max(200),
+        category: z.string().min(1).max(100),
+        genre: z.string().min(1).max(100),
+        description: z.string().min(10).max(2000),
+        atmosphereTags: z.array(z.string().max(100)).max(10).default([]),
+        beginnerFriendly: z.boolean().default(true),
+        memberCount: z.number().int().positive().max(100000).optional().nullable(),
+        foundedYear: z.number().int().min(1900).max(2100).optional().nullable(),
+        practiceSchedule: z.string().max(1000).optional().nullable(),
+        faqs: z.string().max(2000).optional().nullable(),
+        contactInfo: z.string().max(1000).optional().nullable(),
+        instagramUrl: z.string().url().max(500).optional().nullable().or(z.literal("")),
+        twitterUrl: z.string().url().max(500).optional().nullable().or(z.literal("")),
+        lineUrl: z.string().url().max(500).optional().nullable().or(z.literal("")),
+        imageUrl: z.string().max(500).optional().nullable().or(z.literal("")),
+      });
+
+      const data = schema.parse(req.body);
+      const result = await writeGroupSubmissionToNotion({
+        ...data,
+        instagramUrl: data.instagramUrl || null,
+        twitterUrl: data.twitterUrl || null,
+        lineUrl: data.lineUrl || null,
+        imageUrl: data.imageUrl || null,
+      });
+
+      if (!result.success) {
+        return res.status(502).json({ error: "Notionへの連携に失敗しました", details: result.error });
+      }
+
+      return res.status(201).json({ success: true, pageId: result.pageId });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input", details: error.errors });
+      }
+      console.error("Error creating group submission:", error);
+      return res.status(500).json({ error: "Failed to submit group" });
+    }
+  });
+
+  app.post("/api/submissions/event", async (req, res) => {
+    try {
+      const schema = z.object({
+        groupId: z.string().min(1).max(36),
+        title: z.string().min(1).max(200),
+        description: z.string().min(10).max(2000),
+        date: z.string().datetime(),
+        endDate: z.string().datetime().optional().nullable().or(z.literal("")),
+        location: z.string().min(1).max(200),
+        requirements: z.string().max(1000).optional().nullable(),
+        atmosphereTags: z.array(z.string().max(100)).max(10).default([]),
+        participationFlow: z.string().max(1000).optional().nullable(),
+        maxParticipants: z.number().int().positive().max(100000).optional().nullable(),
+        imageUrl: z.string().max(500).optional().nullable().or(z.literal("")),
+        mapUrl: z.string().url().max(500).optional().nullable().or(z.literal("")),
+      });
+
+      const data = schema.parse(req.body);
+      const result = await writeEventSubmissionToNotion({
+        ...data,
+        endDate: data.endDate || null,
+        imageUrl: data.imageUrl || null,
+        mapUrl: data.mapUrl || null,
+      });
+
+      if (!result.success) {
+        return res.status(502).json({ error: "Notionへの連携に失敗しました", details: result.error });
+      }
+
+      return res.status(201).json({ success: true, pageId: result.pageId });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "Invalid input", details: error.errors });
+      }
+      console.error("Error creating event submission:", error);
+      return res.status(500).json({ error: "Failed to submit event" });
+    }
+  });
+
   // Get all events
   app.get("/api/events", async (req, res) => {
     try {
@@ -312,7 +431,7 @@ export async function registerRoutes(
         eventDate: z.string().max(100).optional().nullable(),
         eventLocation: z.string().max(200).optional().nullable(),
         eventDescription: z.string().max(2000).optional().nullable(),
-        eventImageUrl: z.string().url().optional().nullable().or(z.literal("")),
+        eventImageUrl: z.string().max(500).optional().nullable().or(z.literal("")),
       });
 
       const validatedData = contactSchema.parse(req.body);
@@ -341,6 +460,7 @@ export async function registerRoutes(
         eventDate: validatedData.eventDate,
         eventLocation: validatedData.eventLocation,
         eventDescription: validatedData.eventDescription,
+        eventImageUrl: validatedData.eventImageUrl,
       });
 
       if (!notionResult.success) {

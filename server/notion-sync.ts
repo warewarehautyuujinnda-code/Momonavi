@@ -272,6 +272,7 @@ export async function writeContactToNotion(contact: {
   eventDate?: string | null;
   eventLocation?: string | null;
   eventDescription?: string | null;
+  eventImageUrl?: string | null;
 }): Promise<{ success: boolean; pageId?: string; error?: string }> {
   try {
     const notion = await getNotionClient();
@@ -297,7 +298,13 @@ export async function writeContactToNotion(contact: {
     if (contact.eventLocation) {
       properties["開催場所"] = { rich_text: [{ text: { content: contact.eventLocation } }] };
     }
-    
+    if (contact.eventDescription) {
+      properties["イベント説明"] = { rich_text: [{ text: { content: contact.eventDescription.slice(0, 2000) } }] };
+    }
+    if (contact.eventImageUrl) {
+      properties["画像URL"] = { url: contact.eventImageUrl };
+    }
+
     const response = await notion.pages.create({
       parent: { database_id: dbId },
       properties,
@@ -383,6 +390,145 @@ export async function syncArticlesFromNotion(): Promise<{ synced: number; errors
   }
   
   return { synced, errors };
+}
+
+
+export async function writeGroupSubmissionToNotion(submission: {
+  name: string;
+  university: string;
+  category: string;
+  genre: string;
+  description: string;
+  atmosphereTags: string[];
+  beginnerFriendly: boolean;
+  memberCount?: number | null;
+  foundedYear?: number | null;
+  practiceSchedule?: string | null;
+  faqs?: string | null;
+  contactInfo?: string | null;
+  instagramUrl?: string | null;
+  twitterUrl?: string | null;
+  lineUrl?: string | null;
+  imageUrl?: string | null;
+}): Promise<{ success: boolean; pageId?: string; error?: string }> {
+  try {
+    const notion = await getNotionClient();
+    const dbId = extractDatabaseId(process.env.NOTION_CIRCLENAME_URL!);
+
+    const properties: any = {
+      "名前": { title: [{ text: { content: submission.name.slice(0, 200) } }] },
+      "大学": { rich_text: [{ text: { content: submission.university.slice(0, 200) } }] },
+      "区分": { rich_text: [{ text: { content: submission.category.slice(0, 100) } }] },
+      "ジャンル": { rich_text: [{ text: { content: submission.genre.slice(0, 100) } }] },
+      "説明": { rich_text: [{ text: { content: submission.description.slice(0, 2000) } }] },
+      "初心者歓迎": { checkbox: submission.beginnerFriendly },
+      "承認": { checkbox: false },
+    };
+
+    if (submission.atmosphereTags.length > 0) {
+      properties["雰囲気タグ"] = {
+        multi_select: submission.atmosphereTags.slice(0, 10).map((tag) => ({ name: tag.slice(0, 100) })),
+      };
+    }
+
+    if (submission.memberCount !== undefined && submission.memberCount !== null) {
+      properties["部員数"] = { number: submission.memberCount };
+    }
+    if (submission.foundedYear !== undefined && submission.foundedYear !== null) {
+      properties["設立年"] = { number: submission.foundedYear };
+    }
+    if (submission.practiceSchedule) {
+      properties["活動日"] = { rich_text: [{ text: { content: submission.practiceSchedule.slice(0, 1000) } }] };
+    }
+    if (submission.faqs) {
+      properties["FAQ"] = { rich_text: [{ text: { content: submission.faqs.slice(0, 2000) } }] };
+    }
+    if (submission.contactInfo) {
+      properties["連絡先"] = { rich_text: [{ text: { content: submission.contactInfo.slice(0, 1000) } }] };
+    }
+    if (submission.instagramUrl) {
+      properties["Instagram"] = { url: submission.instagramUrl };
+    }
+    if (submission.twitterUrl) {
+      properties["Twitter"] = { url: submission.twitterUrl };
+    }
+    if (submission.lineUrl) {
+      properties["LINE"] = { url: submission.lineUrl };
+    }
+    if (submission.imageUrl) {
+      properties["画像URL"] = { url: submission.imageUrl };
+    }
+
+    const response = await notion.pages.create({
+      parent: { database_id: dbId },
+      properties,
+    });
+
+    return { success: true, pageId: response.id };
+  } catch (err: any) {
+    console.error("Failed to write group submission to Notion:", err);
+    return { success: false, error: err.message };
+  }
+}
+
+export async function writeEventSubmissionToNotion(submission: {
+  groupId: string;
+  title: string;
+  description: string;
+  date: string;
+  endDate?: string | null;
+  location: string;
+  requirements?: string | null;
+  atmosphereTags: string[];
+  participationFlow?: string | null;
+  maxParticipants?: number | null;
+  imageUrl?: string | null;
+  mapUrl?: string | null;
+}): Promise<{ success: boolean; pageId?: string; error?: string }> {
+  try {
+    const notion = await getNotionClient();
+    const dbId = extractDatabaseId(process.env.NOTION_EVENT_URL!);
+
+    const properties: any = {
+      "イベント名": { title: [{ text: { content: submission.title.slice(0, 200) } }] },
+      "団体ID": { rich_text: [{ text: { content: submission.groupId.slice(0, 36) } }] },
+      "説明": { rich_text: [{ text: { content: submission.description.slice(0, 2000) } }] },
+      "日時": { date: { start: submission.date, end: submission.endDate || undefined } },
+      "場所": { rich_text: [{ text: { content: submission.location.slice(0, 200) } }] },
+      "承認": { checkbox: false },
+    };
+
+    if (submission.atmosphereTags.length > 0) {
+      properties["雰囲気タグ"] = {
+        multi_select: submission.atmosphereTags.slice(0, 10).map((tag) => ({ name: tag.slice(0, 100) })),
+      };
+    }
+    if (submission.requirements) {
+      properties["持ち物"] = { rich_text: [{ text: { content: submission.requirements.slice(0, 1000) } }] };
+    }
+    if (submission.participationFlow) {
+      properties["参加の流れ"] = { rich_text: [{ text: { content: submission.participationFlow.slice(0, 1000) } }] };
+    }
+    if (submission.maxParticipants !== undefined && submission.maxParticipants !== null) {
+      properties["定員"] = { number: submission.maxParticipants };
+    }
+    if (submission.imageUrl) {
+      properties["画像URL"] = { url: submission.imageUrl };
+    }
+    if (submission.mapUrl) {
+      properties["map URL"] = { url: submission.mapUrl };
+    }
+
+    const response = await notion.pages.create({
+      parent: { database_id: dbId },
+      properties,
+    });
+
+    return { success: true, pageId: response.id };
+  } catch (err: any) {
+    console.error("Failed to write event submission to Notion:", err);
+    return { success: false, error: err.message };
+  }
 }
 
 // Sync all data from Notion
