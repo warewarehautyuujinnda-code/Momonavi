@@ -45,3 +45,5 @@ integrations = ["notion:1.0.0"]
 
 [userenv.shared]
 NOTION_ARTICLE_URL = "https://www.notion.so/2fe7375d47858019a69def08d84ee920?v=2fe7375d4785808a912f000c045e667a"
+ADMIN_EMAIL = "okayamacircleproject@gmail.com"
+MAIL_FROM = "okayamacircleproject@gmail.com"
