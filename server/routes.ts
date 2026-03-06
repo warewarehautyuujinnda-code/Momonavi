@@ -7,7 +7,7 @@ import { sendAdminNotification, sendApprovalNotification } from "./services/mail
 
 const adminAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers["x-admin-key"];
-  const adminKey = process.env.SESSION_SECRET;
+  const adminKey = process.env.ADMIN_KEY || process.env.SESSION_SECRET;
   if (!adminKey || authHeader !== adminKey) {
     return res.status(401).json({ error: "Unauthorized" });
   }
@@ -259,6 +259,24 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error approving submission:", error);
       res.status(500).json({ error: "承認処理に失敗しました" });
+    }
+  });
+
+  app.post("/api/submissions/:id/reject", adminAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const submission = await storage.getSubmission(id);
+      if (!submission) {
+        return res.status(404).json({ error: "Submission not found" });
+      }
+      if (submission.status !== "pending") {
+        return res.status(400).json({ error: "この申請は既に処理済みです" });
+      }
+      const updated = await storage.updateSubmissionStatus(id, "rejected");
+      res.json({ success: true, submission: updated });
+    } catch (error) {
+      console.error("Error rejecting submission:", error);
+      res.status(500).json({ error: "却下処理に失敗しました" });
     }
   });
 

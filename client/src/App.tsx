@@ -8,6 +8,7 @@ import EventDetailPage from "@/pages/event-detail";
 import GroupsPage from "@/pages/groups";
 import GroupDetailPage from "@/pages/group-detail";
 import ContactPage from "@/pages/contact";
+import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/groups" component={GroupsPage} />
       <Route path="/groups/:id" component={GroupDetailPage} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );
