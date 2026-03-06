@@ -2,15 +2,23 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
-import { getNotionClient, extractDatabaseId, testDatabaseConnection } from "./notion";
-import { syncAllFromNotion, syncGroupsFromNotion, syncEventsFromNotion, syncArticlesFromNotion, writeContactToNotion } from "./notion-sync";
+import { insertSubmissionSchema } from "@shared/schema";
+import { sendAdminNotification, sendApprovalNotification } from "./services/mail";
+
+const adminAuth = (req: any, res: any, next: any) => {
+  const authHeader = req.headers["x-admin-key"];
+  const adminKey = process.env.SESSION_SECRET;
+  if (!adminKey || authHeader !== adminKey) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+  next();
+};
 
 export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
   
-  // Get all events
   app.get("/api/events", async (req, res) => {
     try {
       const events = await storage.getEvents();
@@ -21,7 +29,6 @@ export async function registerRoutes(
     }
   });
 
-  // Get single event
   app.get("/api/events/:id", async (req, res) => {
     try {
       const event = await storage.getEvent(req.params.id);
@@ -35,7 +42,6 @@ export async function registerRoutes(
     }
   });
 
-  // Get reviews for an event
   app.get("/api/events/:id/reviews", async (req, res) => {
     try {
       const reviews = await storage.getReviewsByEvent(req.params.id);
@@ -46,18 +52,15 @@ export async function registerRoutes(
     }
   });
 
-  // Create review for an event
   app.post("/api/events/:id/reviews", async (req, res) => {
     try {
       const eventId = req.params.id;
       
-      // Check if event exists
       const event = await storage.getEvent(eventId);
       if (!event) {
         return res.status(404).json({ error: "Event not found" });
       }
 
-      // Validate request body
       const reviewSchema = z.object({
         nickname: z.string().max(20).optional().nullable(),
         rating: z.number().min(1).max(5),
@@ -68,11 +71,10 @@ export async function registerRoutes(
 
       const validatedData = reviewSchema.parse(req.body);
       
-      // Simple spam check - check for common spam patterns
       const spamPatterns = [
         /http[s]?:\/\//i,
         /www\./i,
-        /[\u4e00-\u9fa5]{50,}/,  // Long Chinese text
+        /[\u4e00-\u9fa5]{50,}/,
       ];
       
       const isSpam = spamPatterns.some(pattern => 
@@ -103,7 +105,6 @@ export async function registerRoutes(
     }
   });
 
-  // Get all groups
   app.get("/api/groups", async (req, res) => {
     try {
       const groups = await storage.getGroups();
@@ -114,7 +115,6 @@ export async function registerRoutes(
     }
   });
 
-  // Get single group
   app.get("/api/groups/:id", async (req, res) => {
     try {
       const group = await storage.getGroup(req.params.id);
@@ -128,7 +128,6 @@ export async function registerRoutes(
     }
   });
 
-  // Get events for a group
   app.get("/api/groups/:id/events", async (req, res) => {
     try {
       const events = await storage.getEventsByGroup(req.params.id);
@@ -139,7 +138,6 @@ export async function registerRoutes(
     }
   });
 
-  // Get reviews for a group
   app.get("/api/groups/:id/reviews", async (req, res) => {
     try {
       const reviews = await storage.getReviewsByGroup(req.params.id);
@@ -150,7 +148,6 @@ export async function registerRoutes(
     }
   });
 
-  // Get review stats (average solo friendliness) for a group
   app.get("/api/groups/:id/review-stats", async (req, res) => {
     try {
       const stats = await storage.getGroupReviewStats(req.params.id);
@@ -161,7 +158,6 @@ export async function registerRoutes(
     }
   });
 
-  // Get past events for a group (events before today, excluding the current event)
   app.get("/api/groups/:id/past-events", async (req, res) => {
     try {
       const pastEvents = await storage.getPastEventsByGroup(req.params.id);
@@ -172,188 +168,97 @@ export async function registerRoutes(
     }
   });
 
-  // Get all articles
-  app.get("/api/articles", async (req, res) => {
+  app.post("/api/submissions", async (req, res) => {
     try {
-      const articles = await storage.getArticles();
-      res.json(articles);
-    } catch (error) {
-      console.error("Error fetching articles:", error);
-      res.status(500).json({ error: "Failed to fetch articles" });
-    }
-  });
-
-  // Get single article
-  app.get("/api/articles/:id", async (req, res) => {
-    try {
-      const article = await storage.getArticle(req.params.id);
-      if (!article) {
-        return res.status(404).json({ error: "Article not found" });
-      }
-      res.json(article);
-    } catch (error) {
-      console.error("Error fetching article:", error);
-      res.status(500).json({ error: "Failed to fetch article" });
-    }
-  });
-
-  // Simple auth middleware for admin endpoints
-  const adminAuth = (req: any, res: any, next: any) => {
-    const authHeader = req.headers["x-admin-key"];
-    const adminKey = process.env.SESSION_SECRET;
-    if (!adminKey || authHeader !== adminKey) {
-      return res.status(401).json({ error: "Unauthorized" });
-    }
-    next();
-  };
-
-  // Sync all data from Notion (requires auth)
-  app.post("/api/notion/sync", adminAuth, async (req, res) => {
-    try {
-      console.log("Starting full Notion sync...");
-      const result = await syncAllFromNotion();
-      res.json({
-        success: true,
-        message: "Sync completed",
-        results: result,
-      });
-    } catch (error: any) {
-      console.error("Notion sync error:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Sync groups from Notion (requires auth)
-  app.post("/api/notion/sync/groups", adminAuth, async (req, res) => {
-    try {
-      const result = await syncGroupsFromNotion();
-      res.json({ success: true, ...result });
-    } catch (error: any) {
-      console.error("Notion groups sync error:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Sync events from Notion (requires auth)
-  app.post("/api/notion/sync/events", adminAuth, async (req, res) => {
-    try {
-      const result = await syncEventsFromNotion();
-      res.json({ success: true, ...result });
-    } catch (error: any) {
-      console.error("Notion events sync error:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Sync articles from Notion (requires auth)
-  app.post("/api/notion/sync/articles", adminAuth, async (req, res) => {
-    try {
-      const result = await syncArticlesFromNotion();
-      res.json({ success: true, ...result });
-    } catch (error: any) {
-      console.error("Notion articles sync error:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Test Notion connection
-  app.get("/api/notion/test", async (req, res) => {
-    try {
-      const results: Record<string, any> = {};
-      
-      // Test Events database
-      const eventUrl = process.env.NOTION_EVENT_URL;
-      if (eventUrl) {
-        const eventDbId = extractDatabaseId(eventUrl);
-        results.events = await testDatabaseConnection(eventDbId);
-        results.events.databaseId = eventDbId;
-      } else {
-        results.events = { success: false, error: "NOTION_EVENT_URL not set" };
-      }
-      
-      // Test Groups database
-      const groupUrl = process.env.NOTION_CIRCLENAME_URL;
-      if (groupUrl) {
-        const groupDbId = extractDatabaseId(groupUrl);
-        results.groups = await testDatabaseConnection(groupDbId);
-        results.groups.databaseId = groupDbId;
-      } else {
-        results.groups = { success: false, error: "NOTION_CIRCLENAME_URL not set" };
-      }
-      
-      // Test Contact database
-      const contactUrl = process.env.NOTION_CONTACT_URL;
-      if (contactUrl) {
-        const contactDbId = extractDatabaseId(contactUrl);
-        results.contacts = await testDatabaseConnection(contactDbId);
-        results.contacts.databaseId = contactDbId;
-      } else {
-        results.contacts = { success: false, error: "NOTION_CONTACT_URL not set" };
-      }
-      
-      const allSuccess = results.events?.success && results.groups?.success && results.contacts?.success;
-      res.json({ success: allSuccess, databases: results });
-    } catch (error: any) {
-      console.error("Notion test error:", error);
-      res.status(500).json({ success: false, error: error.message });
-    }
-  });
-
-  // Create contact submission
-  app.post("/api/contact", async (req, res) => {
-    try {
-      const contactSchema = z.object({
-        type: z.enum(["一般", "イベント掲載依頼"]),
-        name: z.string().max(100).optional().nullable(),
-        university: z.string().optional().nullable(),
-        contactMethod: z.string().min(1).max(200),
-        content: z.string().min(10).max(2000),
-        eventName: z.string().max(200).optional().nullable(),
-        eventDate: z.string().max(100).optional().nullable(),
-        eventLocation: z.string().max(200).optional().nullable(),
-        eventDescription: z.string().max(2000).optional().nullable(),
-        eventImageUrl: z.string().url().optional().nullable().or(z.literal("")),
+      const submissionSchema = insertSubmissionSchema.extend({
+        requesterEmail: z.string().email("有効なメールアドレスを入力してください"),
+        groupName: z.string().min(1, "団体名は必須です").max(200),
+        groupUniversity: z.string().min(1, "大学は必須です"),
+        groupCategory: z.string().min(1, "区分は必須です"),
+        groupGenre: z.string().min(1, "ジャンルは必須です"),
+        groupDescription: z.string().min(1, "団体説明は必須です").max(2000),
+        groupAtmosphereTags: z.array(z.string()).min(1, "雰囲気タグを1つ以上選択してください"),
       });
 
-      const validatedData = contactSchema.parse(req.body);
+      const validatedData = submissionSchema.parse(req.body);
 
-      const submission = await storage.createContactSubmission({
-        type: validatedData.type,
-        name: validatedData.name || null,
-        university: validatedData.university || null,
-        contactMethod: validatedData.contactMethod,
-        content: validatedData.content,
-        eventName: validatedData.eventName || null,
-        eventDate: validatedData.eventDate || null,
-        eventLocation: validatedData.eventLocation || null,
-        eventDescription: validatedData.eventDescription || null,
-        eventImageUrl: validatedData.eventImageUrl || null,
+      const submission = await storage.createSubmission(validatedData);
+
+      sendAdminNotification(submission).catch((err) => {
+        console.error("[mail] Admin notification failed (non-blocking):", err);
       });
 
-      // Also write to Notion
-      const notionResult = await writeContactToNotion({
-        type: validatedData.type,
-        name: validatedData.name || null,
-        university: validatedData.university || null,
-        contactMethod: validatedData.contactMethod,
-        content: validatedData.content,
-        eventName: validatedData.eventName,
-        eventDate: validatedData.eventDate,
-        eventLocation: validatedData.eventLocation,
-        eventDescription: validatedData.eventDescription,
-      });
-
-      if (!notionResult.success) {
-        console.warn("Failed to write contact to Notion:", notionResult.error);
-      }
-
-      res.status(201).json({ success: true, id: submission.id, notionSync: notionResult.success });
+      res.status(201).json({ success: true, id: submission.id });
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: "Invalid input", details: error.errors });
+        return res.status(400).json({ error: "入力内容に不備があります", details: error.errors });
       }
-      console.error("Error creating contact submission:", error);
-      res.status(500).json({ error: "Failed to submit" });
+      console.error("Error creating submission:", error);
+      res.status(500).json({ error: "送信に失敗しました" });
+    }
+  });
+
+  app.get("/api/submissions", adminAuth, async (req, res) => {
+    try {
+      const submissions = await storage.getSubmissions();
+      res.json(submissions);
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+      res.status(500).json({ error: "Failed to fetch submissions" });
+    }
+  });
+
+  app.post("/api/submissions/:id/approve", adminAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const submission = await storage.getSubmission(id);
+      if (!submission) {
+        return res.status(404).json({ error: "Submission not found" });
+      }
+      if (submission.status !== "pending") {
+        return res.status(400).json({ error: "この申請は既に処理済みです" });
+      }
+
+      const group = await storage.createGroup({
+        name: submission.groupName,
+        university: submission.groupUniversity,
+        category: submission.groupCategory,
+        genre: submission.groupGenre,
+        description: submission.groupDescription,
+        atmosphereTags: submission.groupAtmosphereTags,
+        contactInfo: submission.groupContactInfo,
+        instagramUrl: submission.groupInstagramUrl,
+        twitterUrl: submission.groupTwitterUrl,
+        lineUrl: submission.groupLineUrl,
+      });
+
+      if (submission.eventTitle && submission.eventLocation) {
+        const eventDate = submission.eventDate ? new Date(submission.eventDate) : new Date();
+        await storage.createEvent({
+          groupId: group.id,
+          title: submission.eventTitle,
+          description: submission.eventDescription || "",
+          date: eventDate,
+          endDate: submission.eventEndDate ? new Date(submission.eventEndDate) : null,
+          location: submission.eventLocation,
+          beginnerWelcome: submission.eventBeginnerWelcome ?? true,
+          soloFriendliness: submission.eventSoloFriendliness ?? 3,
+          atmosphereTags: submission.groupAtmosphereTags,
+          imageUrl: submission.eventImageUrl,
+          status: "approved",
+        });
+      }
+
+      const updated = await storage.updateSubmissionStatus(id, "approved");
+
+      sendApprovalNotification(submission).catch((err) => {
+        console.error("[mail] Approval notification failed (non-blocking):", err);
+      });
+
+      res.json({ success: true, submission: updated, groupId: group.id });
+    } catch (error) {
+      console.error("Error approving submission:", error);
+      res.status(500).json({ error: "承認処理に失敗しました" });
     }
   });
 

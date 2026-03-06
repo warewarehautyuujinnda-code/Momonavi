@@ -1,6 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Calendar, Users, UserPlus, BookOpen, Mail, Menu, X } from "lucide-react";
+import { Calendar, Users, Mail, Menu, X } from "lucide-react";
 import { useState } from "react";
 import logoImg from "@/assets/images/momonavi-logo.png";
 
@@ -9,12 +9,15 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { href: "/events", label: "イベント情報", icon: Calendar },
+    { href: "/", label: "イベント情報", icon: Calendar },
     { href: "/groups", label: "団体紹介", icon: Users },
-    { href: "/buddies", label: "仲間を探す", icon: UserPlus },
-    { href: "/articles", label: "記事", icon: BookOpen },
-    { href: "/contact", label: "お問い合わせ", icon: Mail },
+    { href: "/contact", label: "お問い合わせ＆掲載依頼", icon: Mail },
   ];
+
+  const isActive = (href: string) => {
+    if (href === "/") return location === "/";
+    return location === href || location.startsWith(href + "/");
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:bg-background/95 dark:supports-[backdrop-filter]:bg-background/80 border-b border-border/40">
@@ -28,10 +31,10 @@ export function Header() {
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <Button
-                  variant={location === item.href || location.startsWith(item.href + "/") ? "secondary" : "ghost"}
+                  variant={isActive(item.href) ? "secondary" : "ghost"}
                   size="sm"
                   className="gap-2 rounded-xl"
-                  data-testid={`nav-${item.href.slice(1)}`}
+                  data-testid={`nav-${item.href === "/" ? "events" : item.href.slice(1)}`}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}
@@ -56,10 +59,10 @@ export function Header() {
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <Button
-                  variant={location === item.href || location.startsWith(item.href + "/") ? "secondary" : "ghost"}
+                  variant={isActive(item.href) ? "secondary" : "ghost"}
                   className="w-full justify-start gap-3 rounded-xl"
                   onClick={() => setMobileMenuOpen(false)}
-                  data-testid={`mobile-nav-${item.href.slice(1)}`}
+                  data-testid={`mobile-nav-${item.href === "/" ? "events" : item.href.slice(1)}`}
                 >
                   <item.icon className="h-4 w-4" />
                   {item.label}

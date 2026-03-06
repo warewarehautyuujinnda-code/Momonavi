@@ -22,11 +22,8 @@ export const atmosphereTags = [
 ] as const;
 export type AtmosphereTag = typeof atmosphereTags[number];
 
-export const articleCategories = ['あるある', '想い'] as const;
-export type ArticleCategory = typeof articleCategories[number];
-
-export const contactTypes = ['一般', 'イベント掲載依頼'] as const;
-export type ContactType = typeof contactTypes[number];
+export const submissionStatuses = ['pending', 'approved', 'rejected'] as const;
+export type SubmissionStatus = typeof submissionStatuses[number];
 
 export const groups = pgTable("groups", {
   id: varchar("id", { length: 36 }).primaryKey(),
@@ -79,64 +76,48 @@ export const reviews = pgTable("reviews", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-export const companionPosts = pgTable("companion_posts", {
+export const submissions = pgTable("submissions", {
   id: varchar("id", { length: 36 }).primaryKey(),
-  eventId: varchar("event_id", { length: 36 }).notNull(),
-  university: text("university").notNull(),
-  message: text("message").notNull(),
-  preferences: text("preferences"),
-  contactNote: text("contact_note").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-});
-
-export const articles = pgTable("articles", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  title: text("title").notNull(),
-  summary: text("summary").notNull(),
-  content: text("content").notNull(),
-  category: text("category").notNull().default(""),
-  tags: text("tags").array().notNull(),
-  imageUrl: text("image_url"),
-  publishedAt: timestamp("published_at").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const contactSubmissions = pgTable("contact_submissions", {
-  id: varchar("id", { length: 36 }).primaryKey(),
-  type: text("type").notNull(),
-  name: text("name"),
-  university: text("university"),
-  contactMethod: text("contact_method").notNull(),
-  content: text("content").notNull(),
-  eventName: text("event_name"),
-  eventDate: text("event_date"),
-  eventLocation: text("event_location"),
+  requesterEmail: text("requester_email").notNull(),
+  requesterName: text("requester_name"),
+  message: text("message"),
+  groupName: text("group_name").notNull(),
+  groupUniversity: text("group_university").notNull(),
+  groupCategory: text("group_category").notNull(),
+  groupGenre: text("group_genre").notNull(),
+  groupDescription: text("group_description").notNull(),
+  groupAtmosphereTags: text("group_atmosphere_tags").array().notNull(),
+  groupContactInfo: text("group_contact_info"),
+  groupInstagramUrl: text("group_instagram_url"),
+  groupTwitterUrl: text("group_twitter_url"),
+  groupLineUrl: text("group_line_url"),
+  eventTitle: text("event_title"),
   eventDescription: text("event_description"),
+  eventDate: text("event_date"),
+  eventEndDate: text("event_end_date"),
+  eventLocation: text("event_location"),
   eventImageUrl: text("event_image_url"),
+  eventBeginnerWelcome: boolean("event_beginner_welcome"),
+  eventSoloFriendliness: integer("event_solo_friendliness"),
+  status: text("status").notNull().default('pending'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const insertGroupSchema = createInsertSchema(groups).omit({ id: true, createdAt: true });
 export const insertEventSchema = createInsertSchema(events).omit({ id: true, createdAt: true });
 export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true });
-export const insertCompanionPostSchema = createInsertSchema(companionPosts).omit({ id: true, createdAt: true });
-export const insertArticleSchema = createInsertSchema(articles).omit({ id: true, createdAt: true });
-export const insertContactSubmissionSchema = createInsertSchema(contactSubmissions).omit({ id: true, createdAt: true });
+export const insertSubmissionSchema = createInsertSchema(submissions).omit({ id: true, createdAt: true, updatedAt: true, status: true });
 
 export type InsertGroup = z.infer<typeof insertGroupSchema>;
 export type InsertEvent = z.infer<typeof insertEventSchema>;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
-export type InsertCompanionPost = z.infer<typeof insertCompanionPostSchema>;
-export type InsertArticle = z.infer<typeof insertArticleSchema>;
-export type InsertContactSubmission = z.infer<typeof insertContactSubmissionSchema>;
+export type InsertSubmission = z.infer<typeof insertSubmissionSchema>;
 
 export type Group = typeof groups.$inferSelect;
 export type Event = typeof events.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
-export type CompanionPost = typeof companionPosts.$inferSelect;
-export type Article = typeof articles.$inferSelect;
-export type ContactSubmission = typeof contactSubmissions.$inferSelect;
+export type Submission = typeof submissions.$inferSelect;
 
 export type EventWithGroup = Event & { group: Group };
 export type GroupWithEvents = Group & { events: Event[] };

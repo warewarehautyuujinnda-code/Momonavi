@@ -3,28 +3,20 @@ import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import HomePage from "@/pages/home";
 import EventsPage from "@/pages/events";
 import EventDetailPage from "@/pages/event-detail";
 import GroupsPage from "@/pages/groups";
 import GroupDetailPage from "@/pages/group-detail";
-import BuddiesPage from "@/pages/buddies";
-import ArticlesPage from "@/pages/articles";
-import ArticleDetailPage from "@/pages/article-detail";
 import ContactPage from "@/pages/contact";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/events" component={EventsPage} />
+      <Route path="/" component={EventsPage} />
       <Route path="/events/:id" component={EventDetailPage} />
       <Route path="/groups" component={GroupsPage} />
       <Route path="/groups/:id" component={GroupDetailPage} />
-      <Route path="/buddies" component={BuddiesPage} />
-      <Route path="/articles" component={ArticlesPage} />
-      <Route path="/articles/:id" component={ArticleDetailPage} />
       <Route path="/contact" component={ContactPage} />
       <Route component={NotFound} />
     </Switch>

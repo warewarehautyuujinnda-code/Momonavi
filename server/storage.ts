@@ -1,13 +1,11 @@
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
 import { 
-  groups, events, reviews, companionPosts, articles, contactSubmissions,
+  groups, events, reviews, submissions,
   type Group, type InsertGroup,
   type Event, type InsertEvent,
   type Review, type InsertReview,
-  type CompanionPost, type InsertCompanionPost,
-  type Article, type InsertArticle,
-  type ContactSubmission, type InsertContactSubmission,
+  type Submission, type InsertSubmission,
   type EventWithGroup, type GroupWithEvents
 } from "@shared/schema";
 import { randomUUID } from "crypto";
@@ -28,14 +26,10 @@ export interface IStorage {
   getPastEventsByGroup(groupId: string): Promise<Event[]>;
   createReview(review: InsertReview): Promise<Review>;
   
-  getCompanionPosts(): Promise<CompanionPost[]>;
-  getCompanionPostsByEvent(eventId: string): Promise<CompanionPost[]>;
-  createCompanionPost(post: InsertCompanionPost): Promise<CompanionPost>;
-  
-  getArticles(): Promise<Article[]>;
-  getArticle(id: string): Promise<Article | undefined>;
-  
-  createContactSubmission(submission: InsertContactSubmission): Promise<ContactSubmission>;
+  createSubmission(submission: InsertSubmission): Promise<Submission>;
+  getSubmissions(): Promise<Submission[]>;
+  getSubmission(id: string): Promise<Submission | undefined>;
+  updateSubmissionStatus(id: string, status: string): Promise<Submission | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -150,11 +144,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getGroupReviewStats(groupId: string): Promise<{ averageSoloFriendliness: number; eventCount: number }> {
-    // Get ALL events for this group (including current and future events)
     const groupEvents = await db.select().from(events)
       .where(eq(events.groupId, groupId));
     
-    // Filter to approved events that have soloFriendliness set
     const eventsWithSoloFriendliness = groupEvents.filter(
       (e) => e.status === "approved" && e.soloFriendliness !== null && e.soloFriendliness !== undefined
     );
@@ -178,7 +170,6 @@ export class DatabaseStorage implements IStorage {
       .where(eq(events.groupId, groupId))
       .orderBy(desc(events.date));
     
-    // Filter to only past events (date before now)
     return allGroupEvents.filter((e) => new Date(e.date) < now && e.status === "approved");
   }
 
@@ -192,54 +183,47 @@ export class DatabaseStorage implements IStorage {
     return review;
   }
 
-  async getCompanionPosts(): Promise<CompanionPost[]> {
-    const allPosts = await db.select().from(companionPosts)
-      .orderBy(desc(companionPosts.createdAt));
-    
-    return allPosts.filter((p) => new Date(p.expiresAt) > new Date());
-  }
-
-  async getCompanionPostsByEvent(eventId: string): Promise<CompanionPost[]> {
-    const eventPosts = await db.select().from(companionPosts)
-      .where(eq(companionPosts.eventId, eventId))
-      .orderBy(desc(companionPosts.createdAt));
-    
-    return eventPosts.filter((p) => new Date(p.expiresAt) > new Date());
-  }
-
-  async createCompanionPost(insertPost: InsertCompanionPost): Promise<CompanionPost> {
+  async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {
     const id = randomUUID();
-    const [post] = await db.insert(companionPosts).values({
-      id,
-      ...insertPost,
-      preferences: insertPost.preferences ?? null,
-    }).returning();
-    return post;
-  }
-
-  async getArticles(): Promise<Article[]> {
-    return db.select().from(articles)
-      .orderBy(desc(articles.publishedAt));
-  }
-
-  async getArticle(id: string): Promise<Article | undefined> {
-    const [article] = await db.select().from(articles).where(eq(articles.id, id));
-    return article;
-  }
-
-  async createContactSubmission(insertSubmission: InsertContactSubmission): Promise<ContactSubmission> {
-    const id = randomUUID();
-    const [submission] = await db.insert(contactSubmissions).values({
+    const now = new Date();
+    const [submission] = await db.insert(submissions).values({
       id,
       ...insertSubmission,
-      name: insertSubmission.name ?? null,
-      university: insertSubmission.university ?? null,
-      eventName: insertSubmission.eventName ?? null,
-      eventDate: insertSubmission.eventDate ?? null,
-      eventLocation: insertSubmission.eventLocation ?? null,
+      requesterName: insertSubmission.requesterName ?? null,
+      message: insertSubmission.message ?? null,
+      groupContactInfo: insertSubmission.groupContactInfo ?? null,
+      groupInstagramUrl: insertSubmission.groupInstagramUrl ?? null,
+      groupTwitterUrl: insertSubmission.groupTwitterUrl ?? null,
+      groupLineUrl: insertSubmission.groupLineUrl ?? null,
+      eventTitle: insertSubmission.eventTitle ?? null,
       eventDescription: insertSubmission.eventDescription ?? null,
+      eventDate: insertSubmission.eventDate ?? null,
+      eventEndDate: insertSubmission.eventEndDate ?? null,
+      eventLocation: insertSubmission.eventLocation ?? null,
       eventImageUrl: insertSubmission.eventImageUrl ?? null,
+      eventBeginnerWelcome: insertSubmission.eventBeginnerWelcome ?? null,
+      eventSoloFriendliness: insertSubmission.eventSoloFriendliness ?? null,
+      status: "pending",
+      createdAt: now,
+      updatedAt: now,
     }).returning();
+    return submission;
+  }
+
+  async getSubmissions(): Promise<Submission[]> {
+    return db.select().from(submissions).orderBy(desc(submissions.createdAt));
+  }
+
+  async getSubmission(id: string): Promise<Submission | undefined> {
+    const [submission] = await db.select().from(submissions).where(eq(submissions.id, id));
+    return submission;
+  }
+
+  async updateSubmissionStatus(id: string, status: string): Promise<Submission | undefined> {
+    const [submission] = await db.update(submissions)
+      .set({ status, updatedAt: new Date() })
+      .where(eq(submissions.id, id))
+      .returning();
     return submission;
   }
 }

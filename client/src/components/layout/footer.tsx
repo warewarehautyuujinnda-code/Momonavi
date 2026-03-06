@@ -1,5 +1,5 @@
 import { SiInstagram } from "react-icons/si";
-import { BookOpen, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import logoImg from "@/assets/images/momonavi-logo.png";
 
 export function Footer() {
@@ -9,12 +9,6 @@ export function Footer() {
       label: "Instagram", 
       icon: SiInstagram,
       description: "最新情報をチェック"
-    },
-    { 
-      href: "https://notion.so/shinkan-navi", 
-      label: "Notion", 
-      icon: BookOpen,
-      description: "運営情報・申請方法等"
     },
   ];
 
@@ -55,7 +49,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t text-center text-sm text-muted-foreground">
-          <p>© 2026 新歓ナビ. Some rights reserved.</p>
+          <p>&copy; 2026 新歓ナビ. Some rights reserved.</p>
         </div>
       </div>
     </footer>

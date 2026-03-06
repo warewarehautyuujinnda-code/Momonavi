@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "wouter";
+import { Link } from "wouter";
 import { Layout } from "@/components/layout/layout";
 import { EventCard } from "@/components/events/event-card";
 import { EventFiltersComponent, type EventFilters, type ViewMode } from "@/components/events/event-filters";
@@ -8,8 +9,29 @@ import { EventCalendarView } from "@/components/events/event-calendar-view";
 import { MasonryGrid } from "@/components/ui/masonry-grid";
 import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SearchX } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { SearchX, ArrowRight, Users, MessageCircle, MapPin } from "lucide-react";
 import type { EventWithGroup } from "@shared/schema";
+import heroImage from "@assets/image_1770376446693.png";
+import momonaviLogo from "@/assets/images/momonavi-logo.png";
+
+const reasons = [
+  {
+    icon: Users,
+    title: "イベントを中心とした検索機能",
+    description: "ばらばらになった情報を整理します",
+  },
+  {
+    icon: MessageCircle,
+    title: "実際に行った人の声が見られる",
+    description: "経験者たちのリアルな体験談を参考にできます",
+  },
+  {
+    icon: MapPin,
+    title: "岡山ローカルに絞って迷わない",
+    description: "岡山大学・岡山理科大学・ノートルダム清心女子大学に特化",
+  },
+];
 
 export default function EventsPage() {
   const searchParams = useSearch();
@@ -29,7 +51,6 @@ export default function EventsPage() {
     queryKey: ["/api/events"],
   });
 
-  // Extract unique filter options from actual event/group data
   const filterOptions = useMemo(() => {
     if (!events) return { universities: [] as string[], categories: [] as string[], atmosphereTags: [] as string[] };
     
@@ -78,11 +99,54 @@ export default function EventsPage() {
 
   return (
     <Layout>
+      <section className="relative overflow-hidden bg-gradient-to-b from-primary/5 to-transparent">
+        <div 
+          className="absolute inset-0 bg-cover bg-[center_20%] opacity-15"
+          style={{ backgroundImage: `url(${heroImage})` }}
+        />
+        <div className="relative z-10 container-narrow py-10 sm:py-14">
+          <div className="flex flex-col items-center text-center space-y-4">
+            <img 
+              src={momonaviLogo} 
+              alt="MOMONAVI" 
+              className="h-20 sm:h-28 w-auto"
+              data-testid="hero-logo"
+            />
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-lg" data-testid="hero-tagline">
+              岡山の大学新歓イベントをまとめて検索。
+              新しい出会いへの一歩を応援します。
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 pt-2">
+              {reasons.map((reason, i) => (
+                <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground bg-white/80 dark:bg-muted/50 rounded-xl px-3 py-2 shadow-sm" data-testid={`hero-reason-${i}`}>
+                  <reason.icon className="h-4 w-4 text-primary shrink-0" />
+                  <span>{reason.title}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Link href="/groups">
+                <Button variant="outline" className="gap-2 rounded-xl" data-testid="hero-link-groups">
+                  <Users className="h-4 w-4" />
+                  団体を探す
+                </Button>
+              </Link>
+              <Link href="/contact">
+                <Button variant="outline" className="gap-2 rounded-xl" data-testid="hero-link-contact">
+                  掲載依頼はこちら
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div className="container-narrow py-10 sm:py-14 relative overflow-hidden">
         <SakuraPetals position="top-right" opacity={0.35} size="md" />
         <div className="space-y-10 relative z-10">
           <div className="space-y-3 pb-6 border-b">
-            <h1 className="text-3xl sm:text-4xl font-bold">
+            <h1 className="text-3xl sm:text-4xl font-bold" data-testid="events-heading">
               イベントを探す
             </h1>
             <p className="text-muted-foreground text-lg">
@@ -120,7 +184,7 @@ export default function EventsPage() {
             </div>
           ) : (
             <div className="space-y-6">
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground" data-testid="events-count">
                 {filteredEvents.length}件のイベント
               </p>
               <div className="hidden lg:block">
