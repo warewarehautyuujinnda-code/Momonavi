@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/layout";
 import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import {
   Mail, Send, Loader2, ChevronDown, CheckCircle, HelpCircle, Eye, Users,
   Calendar, MapPin, Plus, X, Upload, MessageSquare, ExternalLink, ChevronLeft,
-  Clock
+  Clock, PlusCircle, RefreshCw, Sparkles, Search
 } from "lucide-react";
 import { SiInstagram, SiX, SiLine } from "react-icons/si";
 import { format } from "date-fns";
@@ -27,6 +27,7 @@ import { ja } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { universities, groupCategories, genres, atmosphereTags as allAtmosphereTags } from "@shared/schema";
+import type { GroupWithEvents } from "@shared/schema";
 
 import sportsImg from "@/assets/images/stock/sports-1.jpg";
 import musicImg from "@/assets/images/stock/music-1.jpg";
@@ -59,16 +60,20 @@ function formatDateTime(dateStr?: string): string {
   }
 }
 
+type SubmissionType = 'new' | 'add_event' | 'update_group';
+
 const submissionFormSchema = z.object({
+  submissionType: z.enum(['new', 'add_event', 'update_group']).default('new'),
+  targetGroupId: z.string().optional(),
   requesterEmail: z.string().email("有効なメールアドレスを入力してください"),
   requesterName: z.string().max(100).optional(),
   message: z.string().max(2000).optional(),
-  groupName: z.string().min(1, "団体名は必須です").max(200),
-  groupUniversity: z.string().min(1, "大学は必須です"),
-  groupCategory: z.string().min(1, "区分は必須です"),
-  groupGenre: z.string().min(1, "ジャンルは必須です"),
-  groupDescription: z.string().min(1, "団体説明は必須です").max(2000),
-  groupAtmosphereTags: z.array(z.string()).min(1, "雰囲気タグを1つ以上選択してください"),
+  groupName: z.string().max(200).optional(),
+  groupUniversity: z.string().optional(),
+  groupCategory: z.string().optional(),
+  groupGenre: z.string().optional(),
+  groupDescription: z.string().max(2000).optional(),
+  groupAtmosphereTags: z.array(z.string()).optional(),
   groupContactInfo: z.string().max(200).optional(),
   groupInstagramUrl: z.string().url().optional().or(z.literal("")),
   groupTwitterUrl: z.string().url().optional().or(z.literal("")),
@@ -82,6 +87,40 @@ const submissionFormSchema = z.object({
   eventBeginnerWelcome: z.boolean().optional(),
   groupImages: z.array(z.string()).optional(),
   eventImages: z.array(z.string()).optional(),
+}).superRefine((data, ctx) => {
+  if (data.submissionType === 'new' || data.submissionType === 'update_group') {
+    if (!data.groupName || data.groupName.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "団体名は必須です", path: ["groupName"] });
+    }
+    if (!data.groupUniversity || data.groupUniversity.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "大学は必須です", path: ["groupUniversity"] });
+    }
+    if (!data.groupCategory || data.groupCategory.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "区分は必須です", path: ["groupCategory"] });
+    }
+    if (!data.groupGenre || data.groupGenre.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "ジャンルは必須です", path: ["groupGenre"] });
+    }
+    if (!data.groupDescription || data.groupDescription.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "団体説明は必須です", path: ["groupDescription"] });
+    }
+    if (!data.groupAtmosphereTags || data.groupAtmosphereTags.length === 0) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "雰囲気タグを1つ以上選択してください", path: ["groupAtmosphereTags"] });
+    }
+  }
+  if (data.submissionType === 'add_event' || data.submissionType === 'update_group') {
+    if (!data.targetGroupId || data.targetGroupId.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "対象の団体を選択してください", path: ["targetGroupId"] });
+    }
+  }
+  if (data.submissionType === 'add_event') {
+    if (!data.eventTitle || data.eventTitle.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "イベントタイトルは必須です", path: ["eventTitle"] });
+    }
+    if (!data.eventLocation || data.eventLocation.trim() === "") {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "開催場所は必須です", path: ["eventLocation"] });
+    }
+  }
 });
 
 type SubmissionFormData = z.infer<typeof submissionFormSchema>;
@@ -789,10 +828,17 @@ export default function ContactPage() {
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [groupSheetOpen, setGroupSheetOpen] = useState(false);
   const [eventSheetOpen, setEventSheetOpen] = useState(false);
+  const [groupSearchQuery, setGroupSearchQuery] = useState("");
+
+  const { data: allGroups = [] } = useQuery<GroupWithEvents[]>({
+    queryKey: ["/api/groups"],
+  });
 
   const form = useForm<SubmissionFormData>({
     resolver: zodResolver(submissionFormSchema),
     defaultValues: {
+      submissionType: 'new',
+      targetGroupId: "",
       requesterEmail: "",
       requesterName: "",
       message: "",
@@ -817,6 +863,53 @@ export default function ContactPage() {
       eventImages: [],
     },
   });
+
+  const submissionType = form.watch("submissionType") as SubmissionType;
+  const targetGroupId = form.watch("targetGroupId");
+  const isNewSubmission = submissionType === 'new';
+  const isAddEvent = submissionType === 'add_event';
+  const isUpdateGroup = submissionType === 'update_group';
+  const needsGroupSelect = isAddEvent || isUpdateGroup;
+
+  const selectedGroup = allGroups.find(g => g.id === targetGroupId);
+
+  const filteredGroups = allGroups.filter(g =>
+    g.name.toLowerCase().includes(groupSearchQuery.toLowerCase()) ||
+    g.university.toLowerCase().includes(groupSearchQuery.toLowerCase())
+  );
+
+  const handleGroupSelect = (groupId: string) => {
+    const group = allGroups.find(g => g.id === groupId);
+    form.setValue("targetGroupId", groupId, { shouldValidate: true });
+    if (group && isUpdateGroup) {
+      form.setValue("groupName", group.name);
+      form.setValue("groupUniversity", group.university);
+      form.setValue("groupCategory", group.category);
+      form.setValue("groupGenre", group.genre);
+      form.setValue("groupDescription", group.description);
+      form.setValue("groupAtmosphereTags", [...group.atmosphereTags]);
+      form.setValue("groupContactInfo", group.contactInfo || "");
+      form.setValue("groupInstagramUrl", group.instagramUrl || "");
+      form.setValue("groupTwitterUrl", group.twitterUrl || "");
+      form.setValue("groupLineUrl", group.lineUrl || "");
+    }
+  };
+
+  const handleSubmissionTypeChange = (type: SubmissionType) => {
+    form.setValue("submissionType", type);
+    form.setValue("targetGroupId", "");
+    form.setValue("groupName", "");
+    form.setValue("groupUniversity", "");
+    form.setValue("groupCategory", "");
+    form.setValue("groupGenre", "");
+    form.setValue("groupDescription", "");
+    form.setValue("groupAtmosphereTags", []);
+    form.setValue("groupContactInfo", "");
+    form.setValue("groupInstagramUrl", "");
+    form.setValue("groupTwitterUrl", "");
+    form.setValue("groupLineUrl", "");
+    setGroupSearchQuery("");
+  };
 
   const watchedData = form.watch();
   const selectedTags = form.watch("groupAtmosphereTags") || [];
@@ -868,6 +961,12 @@ export default function ContactPage() {
     mutation.mutate(data);
   };
 
+  const successMessages: Record<SubmissionType, string> = {
+    new: "掲載依頼ありがとうございます。内容を確認後、ご入力いただいたメールアドレスにご連絡いたします。",
+    add_event: "イベント追加申請を受け付けました。確認後、掲載いたします。",
+    update_group: "情報更新申請を受け付けました。確認後、情報を更新いたします。",
+  };
+
   if (submitted) {
     return (
       <Layout>
@@ -879,9 +978,9 @@ export default function ContactPage() {
                   <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
               </div>
-              <h2 className="text-xl font-bold" data-testid="text-submit-success">送信完了しました</h2>
+              <h2 className="text-xl font-bold" data-testid="text-submit-success">申請を受け付けました</h2>
               <p className="text-muted-foreground">
-                掲載依頼ありがとうございます。内容を確認後、ご入力いただいたメールアドレスにご連絡いたします。
+                {successMessages[submissionType]}
               </p>
               <Button
                 variant="outline"
@@ -890,11 +989,12 @@ export default function ContactPage() {
                   setSubmitted(false);
                   setShowEventFields(false);
                   setConsentAccepted(false);
+                  setGroupSearchQuery("");
                   form.reset();
                 }}
                 data-testid="button-new-submission"
               >
-                新しい掲載依頼
+                新しい申請
               </Button>
             </CardContent>
           </Card>
@@ -924,6 +1024,107 @@ export default function ContactPage() {
           {/* ===== 掲載依頼タブ ===== */}
           <TabsContent value="submission" className="mt-8">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+              {/* 申請タイプ選択 */}
+              <Card className="rounded-2xl border-0 shadow-sm">
+                <CardHeader className="p-6 sm:p-8 pb-0">
+                  <CardTitle className="text-xl">申請タイプを選択</CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 sm:p-8 pt-4 space-y-3">
+                  {([
+                    { type: 'new' as SubmissionType, icon: Sparkles, label: '新規掲載申請', desc: '新しい団体・イベントを掲載する' },
+                    { type: 'add_event' as SubmissionType, icon: PlusCircle, label: 'イベント追加申請', desc: '既存の団体に新しいイベントを追加する' },
+                    { type: 'update_group' as SubmissionType, icon: RefreshCw, label: '情報更新申請', desc: '既存の団体情報やイベント情報を更新する' },
+                  ]).map(({ type, icon: Icon, label, desc }) => (
+                    <button
+                      key={type}
+                      type="button"
+                      onClick={() => handleSubmissionTypeChange(type)}
+                      data-testid={`submission-type-${type}`}
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-colors ${
+                        submissionType === type
+                          ? "border-primary bg-primary/5"
+                          : "border-muted hover:border-primary/40 bg-background"
+                      }`}
+                    >
+                      <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${submissionType === type ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">{label}</p>
+                        <p className="text-xs text-muted-foreground">{desc}</p>
+                      </div>
+                      {submissionType === type && (
+                        <CheckCircle className="h-5 w-5 text-primary ml-auto shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* 対象グループ選択（add_event / update_group のみ） */}
+              {needsGroupSelect && (
+                <Card className="rounded-2xl border-0 shadow-sm">
+                  <CardHeader className="p-6 sm:p-8 pb-0">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                        <Search className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl">
+                          対象の団体を選択 <span className="text-destructive text-sm font-normal">（必須）</span>
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground mt-0.5">
+                          {isAddEvent ? "イベントを追加する団体を選んでください" : "情報を更新する団体を選んでください"}
+                        </p>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6 sm:p-8 pt-4 space-y-3">
+                    <Input
+                      placeholder="団体名・大学名で検索..."
+                      value={groupSearchQuery}
+                      onChange={(e) => setGroupSearchQuery(e.target.value)}
+                      className="rounded-xl"
+                      data-testid="input-group-search"
+                    />
+                    <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                      {filteredGroups.length === 0 ? (
+                        <p className="text-sm text-muted-foreground text-center py-4">見つかりませんでした</p>
+                      ) : filteredGroups.map((group) => (
+                        <button
+                          key={group.id}
+                          type="button"
+                          onClick={() => handleGroupSelect(group.id)}
+                          data-testid={`group-option-${group.id}`}
+                          className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${
+                            targetGroupId === group.id
+                              ? "border-primary bg-primary/5"
+                              : "border-muted hover:border-primary/30 bg-background"
+                          }`}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">{group.name}</p>
+                            <p className="text-xs text-muted-foreground">{group.university} · {group.category} · {group.genre}</p>
+                          </div>
+                          {targetGroupId === group.id && (
+                            <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                    {form.formState.errors.targetGroupId && (
+                      <p className="text-sm text-destructive">{form.formState.errors.targetGroupId.message}</p>
+                    )}
+                    {selectedGroup && (
+                      <div className="flex items-center gap-2 p-3 bg-primary/5 rounded-xl">
+                        <CheckCircle className="h-4 w-4 text-primary shrink-0" />
+                        <p className="text-sm font-medium text-primary">{selectedGroup.name} を選択中</p>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
 
               {/* 申請者情報 */}
               <Card className="rounded-2xl border-0 shadow-sm">
@@ -963,14 +1164,23 @@ export default function ContactPage() {
                 </CardContent>
               </Card>
 
-              {/* 団体情報 */}
+              {/* 団体情報 — add_event の場合は非表示 */}
+              {!isAddEvent && (
               <Card className="rounded-2xl border-0 shadow-sm">
                 <CardHeader className="p-6 sm:p-8 pb-0">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                       <Users className="h-5 w-5 text-primary" />
                     </div>
-                    <CardTitle className="text-xl">団体情報 <span className="text-destructive text-sm font-normal">（必須）</span></CardTitle>
+                    <div>
+                      <CardTitle className="text-xl">
+                        {isUpdateGroup ? "更新後の団体情報" : "団体情報"}
+                        {" "}<span className="text-destructive text-sm font-normal">（必須）</span>
+                      </CardTitle>
+                      {isUpdateGroup && (
+                        <p className="text-sm text-muted-foreground mt-0.5">選択した団体の現在の情報をプリフィルしました。変更したい項目を修正してください。</p>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="p-6 sm:p-8 pt-6 space-y-4">
@@ -1169,26 +1379,35 @@ export default function ContactPage() {
                   </div>
                 </CardContent>
               </Card>
+              )}
 
               {/* イベント情報 */}
               <Card className="rounded-2xl border-0 shadow-sm">
-                <Collapsible open={showEventFields} onOpenChange={setShowEventFields}>
+                <Collapsible open={isAddEvent || showEventFields} onOpenChange={isAddEvent ? undefined : setShowEventFields}>
                   <CollapsibleTrigger asChild>
                     <button
                       type="button"
-                      className="w-full p-6 sm:p-8 flex items-center justify-between text-left hover-elevate rounded-2xl"
+                      className={`w-full p-6 sm:p-8 flex items-center justify-between text-left rounded-2xl ${isAddEvent ? "cursor-default" : "hover-elevate"}`}
                       data-testid="toggle-event-section"
+                      disabled={isAddEvent}
                     >
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
                           <Calendar className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h3 className="text-xl font-semibold">イベント情報</h3>
-                          <p className="text-sm text-muted-foreground">任意 — イベントも同時に掲載する場合</p>
+                          <h3 className="text-xl font-semibold">
+                            イベント情報
+                            {isAddEvent && <span className="text-destructive text-sm font-normal ml-2">（必須）</span>}
+                          </h3>
+                          <p className="text-sm text-muted-foreground">
+                            {isAddEvent ? "追加するイベントの情報を入力してください" : "任意 — イベントも同時に掲載する場合"}
+                          </p>
                         </div>
                       </div>
-                      <ChevronDown className={`h-5 w-5 text-muted-foreground shrink-0 transition-transform ${showEventFields ? 'rotate-180' : ''}`} />
+                      {!isAddEvent && (
+                        <ChevronDown className={`h-5 w-5 text-muted-foreground shrink-0 transition-transform ${showEventFields ? 'rotate-180' : ''}`} />
+                      )}
                     </button>
                   </CollapsibleTrigger>
                   <CollapsibleContent>

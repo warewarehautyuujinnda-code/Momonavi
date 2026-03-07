@@ -170,18 +170,35 @@ export async function registerRoutes(
 
   app.post("/api/submissions", async (req, res) => {
     try {
+      const submissionType = req.body.submissionType ?? 'new';
+      const isNewSubmission = submissionType === 'new';
+
       const submissionSchema = insertSubmissionSchema.extend({
         requesterEmail: z.string().email("有効なメールアドレスを入力してください"),
-        groupName: z.string().min(1, "団体名は必須です").max(200),
-        groupUniversity: z.string().min(1, "大学は必須です"),
-        groupCategory: z.string().min(1, "区分は必須です"),
-        groupGenre: z.string().min(1, "ジャンルは必須です"),
-        groupDescription: z.string().min(1, "団体説明は必須です").max(2000),
-        groupAtmosphereTags: z.array(z.string()).min(1, "雰囲気タグを1つ以上選択してください"),
+        groupName: isNewSubmission
+          ? z.string().min(1, "団体名は必須です").max(200)
+          : z.string().max(200).optional().default(""),
+        groupUniversity: isNewSubmission
+          ? z.string().min(1, "大学は必須です")
+          : z.string().optional().default(""),
+        groupCategory: isNewSubmission
+          ? z.string().min(1, "区分は必須です")
+          : z.string().optional().default(""),
+        groupGenre: isNewSubmission
+          ? z.string().min(1, "ジャンルは必須です")
+          : z.string().optional().default(""),
+        groupDescription: isNewSubmission
+          ? z.string().min(1, "団体説明は必須です").max(2000)
+          : z.string().max(2000).optional().default(""),
+        groupAtmosphereTags: isNewSubmission
+          ? z.array(z.string()).min(1, "雰囲気タグを1つ以上選択してください")
+          : z.array(z.string()).optional().default([]),
         eventMapUrl: z.string().optional().nullable(),
         eventImageUrl: z.string().optional().nullable(),
         groupImages: z.array(z.string()).optional().nullable(),
         eventImages: z.array(z.string()).optional().nullable(),
+        submissionType: z.enum(['new', 'add_event', 'update_group']).default('new'),
+        targetGroupId: z.string().optional().nullable(),
       });
 
       const validatedData = submissionSchema.parse(req.body);
@@ -223,23 +240,20 @@ export async function registerRoutes(
         return res.status(400).json({ error: "この申請は既に処理済みです" });
       }
 
-      const group = await storage.createGroup({
-        name: submission.groupName,
-        university: submission.groupUniversity,
-        category: submission.groupCategory,
-        genre: submission.groupGenre,
-        description: submission.groupDescription,
-        atmosphereTags: submission.groupAtmosphereTags,
-        contactInfo: submission.groupContactInfo,
-        instagramUrl: submission.groupInstagramUrl,
-        twitterUrl: submission.groupTwitterUrl,
-        lineUrl: submission.groupLineUrl,
-      });
+      const submissionType = submission.submissionType ?? 'new';
+      let resultGroupId: string;
 
-      if (submission.eventTitle && submission.eventLocation) {
+      if (submissionType === 'add_event') {
+        if (!submission.targetGroupId) {
+          return res.status(400).json({ error: "対象グループIDが指定されていません" });
+        }
+        resultGroupId = submission.targetGroupId;
+        if (!submission.eventTitle || !submission.eventLocation) {
+          return res.status(400).json({ error: "イベント追加申請にはイベントタイトルと開催場所が必要です" });
+        }
         const eventDate = submission.eventDate ? new Date(submission.eventDate) : new Date();
         await storage.createEvent({
-          groupId: group.id,
+          groupId: resultGroupId,
           title: submission.eventTitle,
           description: submission.eventDescription || "",
           date: eventDate,
@@ -247,11 +261,76 @@ export async function registerRoutes(
           location: submission.eventLocation,
           beginnerWelcome: submission.eventBeginnerWelcome ?? true,
           soloFriendliness: submission.eventSoloFriendliness ?? 3,
-          atmosphereTags: submission.groupAtmosphereTags,
+          atmosphereTags: submission.groupAtmosphereTags ?? [],
           imageUrl: (submission.eventImages && submission.eventImages.length > 0) ? submission.eventImages[0] : submission.eventImageUrl,
           mapUrl: submission.eventMapUrl,
           status: "approved",
         });
+      } else if (submissionType === 'update_group') {
+        if (!submission.targetGroupId) {
+          return res.status(400).json({ error: "対象グループIDが指定されていません" });
+        }
+        resultGroupId = submission.targetGroupId;
+        await storage.updateGroup(resultGroupId, {
+          name: submission.groupName,
+          university: submission.groupUniversity,
+          category: submission.groupCategory,
+          genre: submission.groupGenre,
+          description: submission.groupDescription,
+          atmosphereTags: submission.groupAtmosphereTags ?? [],
+          contactInfo: submission.groupContactInfo,
+          instagramUrl: submission.groupInstagramUrl,
+          twitterUrl: submission.groupTwitterUrl,
+          lineUrl: submission.groupLineUrl,
+        });
+        if (submission.eventTitle && submission.eventLocation) {
+          const eventDate = submission.eventDate ? new Date(submission.eventDate) : new Date();
+          await storage.createEvent({
+            groupId: resultGroupId,
+            title: submission.eventTitle,
+            description: submission.eventDescription || "",
+            date: eventDate,
+            endDate: submission.eventEndDate ? new Date(submission.eventEndDate) : null,
+            location: submission.eventLocation,
+            beginnerWelcome: submission.eventBeginnerWelcome ?? true,
+            soloFriendliness: submission.eventSoloFriendliness ?? 3,
+            atmosphereTags: submission.groupAtmosphereTags ?? [],
+            imageUrl: (submission.eventImages && submission.eventImages.length > 0) ? submission.eventImages[0] : submission.eventImageUrl,
+            mapUrl: submission.eventMapUrl,
+            status: "approved",
+          });
+        }
+      } else {
+        const group = await storage.createGroup({
+          name: submission.groupName,
+          university: submission.groupUniversity,
+          category: submission.groupCategory,
+          genre: submission.groupGenre,
+          description: submission.groupDescription,
+          atmosphereTags: submission.groupAtmosphereTags,
+          contactInfo: submission.groupContactInfo,
+          instagramUrl: submission.groupInstagramUrl,
+          twitterUrl: submission.groupTwitterUrl,
+          lineUrl: submission.groupLineUrl,
+        });
+        resultGroupId = group.id;
+        if (submission.eventTitle && submission.eventLocation) {
+          const eventDate = submission.eventDate ? new Date(submission.eventDate) : new Date();
+          await storage.createEvent({
+            groupId: group.id,
+            title: submission.eventTitle,
+            description: submission.eventDescription || "",
+            date: eventDate,
+            endDate: submission.eventEndDate ? new Date(submission.eventEndDate) : null,
+            location: submission.eventLocation,
+            beginnerWelcome: submission.eventBeginnerWelcome ?? true,
+            soloFriendliness: submission.eventSoloFriendliness ?? 3,
+            atmosphereTags: submission.groupAtmosphereTags,
+            imageUrl: (submission.eventImages && submission.eventImages.length > 0) ? submission.eventImages[0] : submission.eventImageUrl,
+            mapUrl: submission.eventMapUrl,
+            status: "approved",
+          });
+        }
       }
 
       const updated = await storage.updateSubmissionStatus(id, "approved");
@@ -260,7 +339,7 @@ export async function registerRoutes(
         console.error("[mail] Approval notification failed (non-blocking):", err);
       });
 
-      res.json({ success: true, submission: updated, groupId: group.id });
+      res.json({ success: true, submission: updated, groupId: resultGroupId });
     } catch (error) {
       console.error("Error approving submission:", error);
       res.status(500).json({ error: "承認処理に失敗しました" });

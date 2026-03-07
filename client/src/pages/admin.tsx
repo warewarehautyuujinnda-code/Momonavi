@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, XCircle, Clock, LogOut, RefreshCw, Mail, Calendar, MapPin, Tag, Users, Link as LinkIcon } from "lucide-react";
-import type { Submission } from "@shared/schema";
+import type { Submission, GroupWithEvents } from "@shared/schema";
 
 type Tab = "pending" | "approved" | "rejected" | "all";
 
@@ -81,14 +81,22 @@ function StatusBadge({ status }: { status: string }) {
   return <Badge className="bg-red-100 text-red-700 border-red-200">却下</Badge>;
 }
 
+function SubmissionTypeBadge({ type }: { type: string }) {
+  if (type === "add_event") return <Badge className="bg-green-100 text-green-700 border-green-200" data-testid="badge-type-add-event">イベント追加</Badge>;
+  if (type === "update_group") return <Badge className="bg-orange-100 text-orange-700 border-orange-200" data-testid="badge-type-update-group">情報更新</Badge>;
+  return <Badge className="bg-blue-100 text-blue-700 border-blue-200" data-testid="badge-type-new">新規掲載</Badge>;
+}
+
 function SubmissionCard({
   sub,
   adminKey,
   onAction,
+  groups,
 }: {
   sub: Submission;
   adminKey: string;
   onAction: () => void;
+  groups: GroupWithEvents[];
 }) {
   const { toast } = useToast();
   const qc = useQueryClient();
@@ -96,8 +104,11 @@ function SubmissionCard({
   const approveMutation = useMutation({
     mutationFn: () => adminFetch(`/api/submissions/${sub.id}/approve`, adminKey, { method: "POST" }),
     onSuccess: () => {
-      toast({ title: "承認しました", description: `${sub.groupName} をサイトに掲載しました。` });
+      const label = sub.submissionType === 'add_event' ? 'イベントを追加しました' :
+                    sub.submissionType === 'update_group' ? '情報を更新しました' : 'サイトに掲載しました';
+      toast({ title: "承認しました", description: `${sub.groupName || '申請'} を${label}。` });
       qc.invalidateQueries({ queryKey: ["/api/submissions"] });
+      qc.invalidateQueries({ queryKey: ["/api/groups"] });
       onAction();
     },
     onError: (e: Error) => toast({ title: "エラー", description: e.message, variant: "destructive" }),
@@ -115,6 +126,8 @@ function SubmissionCard({
 
   const isPending = sub.status === "pending";
   const createdAt = new Date(sub.createdAt).toLocaleDateString("ja-JP", { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
+  const targetGroup = sub.targetGroupId ? groups.find(g => g.id === sub.targetGroupId) : null;
+  const submissionType = sub.submissionType ?? 'new';
 
   return (
     <Card className="border border-gray-200 shadow-sm" data-testid={`card-submission-${sub.id}`}>
@@ -122,10 +135,20 @@ function SubmissionCard({
         <div className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="font-bold text-lg" data-testid={`text-group-name-${sub.id}`}>{sub.groupName}</h2>
+              <h2 className="font-bold text-lg" data-testid={`text-group-name-${sub.id}`}>
+                {submissionType !== 'new' && targetGroup ? targetGroup.name : (sub.groupName || "（団体名なし）")}
+              </h2>
               <StatusBadge status={sub.status} />
+              <SubmissionTypeBadge type={submissionType} />
             </div>
-            <p className="text-sm text-gray-500 mt-0.5">{sub.groupUniversity} · {sub.groupCategory} · {sub.groupGenre}</p>
+            {submissionType === 'new' && (
+              <p className="text-sm text-gray-500 mt-0.5">{sub.groupUniversity} · {sub.groupCategory} · {sub.groupGenre}</p>
+            )}
+            {(submissionType === 'add_event' || submissionType === 'update_group') && targetGroup && (
+              <p className="text-sm text-gray-500 mt-0.5" data-testid={`text-target-group-${sub.id}`}>
+                対象: {targetGroup.name} ({targetGroup.university} · {targetGroup.category})
+              </p>
+            )}
           </div>
           <span className="text-xs text-gray-400 whitespace-nowrap">{createdAt}</span>
         </div>
@@ -249,6 +272,11 @@ export default function AdminPage() {
     retry: false,
   });
 
+  const { data: groups = [] } = useQuery<GroupWithEvents[]>({
+    queryKey: ["/api/groups"],
+    enabled: !!adminKey,
+  });
+
   if (!adminKey) return <LoginScreen onLogin={handleLogin} />;
 
   if (isError) {
@@ -330,6 +358,7 @@ export default function AdminPage() {
                 key={sub.id}
                 sub={sub}
                 adminKey={adminKey}
+                groups={groups}
                 onAction={() => qc.invalidateQueries({ queryKey: ["/api/submissions"] })}
               />
             ))}

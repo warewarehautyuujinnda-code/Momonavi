@@ -26,6 +26,8 @@ export interface IStorage {
   getPastEventsByGroup(groupId: string): Promise<Event[]>;
   createReview(review: InsertReview): Promise<Review>;
   
+  updateGroup(id: string, data: Partial<InsertGroup>): Promise<Group | undefined>;
+
   createSubmission(submission: InsertSubmission): Promise<Submission>;
   getSubmissions(): Promise<Submission[]>;
   getSubmission(id: string): Promise<Submission | undefined>;
@@ -181,6 +183,14 @@ export class DatabaseStorage implements IStorage {
       nickname: insertReview.nickname ?? null,
     }).returning();
     return review;
+  }
+
+  async updateGroup(id: string, data: Partial<InsertGroup>): Promise<Group | undefined> {
+    const [group] = await db.update(groups)
+      .set(data)
+      .where(eq(groups.id, id))
+      .returning();
+    return group;
   }
 
   async createSubmission(insertSubmission: InsertSubmission): Promise<Submission> {

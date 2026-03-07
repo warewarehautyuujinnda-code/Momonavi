@@ -102,6 +102,8 @@ export const submissions = pgTable("submissions", {
   eventBeginnerWelcome: boolean("event_beginner_welcome"),
   eventSoloFriendliness: integer("event_solo_friendliness"),
   eventMapUrl: text("event_map_url"),
+  submissionType: text("submission_type").notNull().default('new'),
+  targetGroupId: varchar("target_group_id", { length: 36 }),
   status: text("status").notNull().default('pending'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
