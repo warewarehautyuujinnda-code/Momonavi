@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,10 +11,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Send, Loader2, ChevronDown, CheckCircle, HelpCircle, Eye, Users, Calendar, MapPin } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Mail, Send, Loader2, ChevronDown, CheckCircle, HelpCircle, Eye, Users,
+  Calendar, MapPin, Plus, X, Upload, Image, MessageSquare, ExternalLink, ChevronLeft,
+  Clock
+} from "lucide-react";
+import { SiInstagram, SiX, SiLine } from "react-icons/si";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { universities, groupCategories, genres, atmosphereTags as allAtmosphereTags } from "@shared/schema";
@@ -27,17 +36,27 @@ import volunteerImg from "@/assets/images/stock/volunteer-1.jpg";
 import danceImg from "@/assets/images/stock/dance-1.jpg";
 
 const genreImageMap: Record<string, string> = {
-  "スポーツ": sportsImg,
-  "音楽": musicImg,
-  "文化": cultureImg,
-  "学術": studyImg,
-  "ボランティア": volunteerImg,
+  "スポーツ": sportsImg, "バレーボール": sportsImg, "バスケットボール": sportsImg,
+  "サッカー": sportsImg, "テニス": sportsImg, "野球": sportsImg, "陸上": sportsImg,
+  "音楽": musicImg, "軽音": musicImg, "吹奏楽": musicImg,
+  "文化": cultureImg, "演劇": cultureImg, "写真": cultureImg, "映画": cultureImg,
+  "学術": studyImg, "プログラミング": studyImg,
+  "ボランティア": volunteerImg, "国際交流": volunteerImg,
   "ダンス": danceImg,
 };
 
 function getImageForGenre(genre?: string): string {
   if (!genre) return cultureImg;
   return genreImageMap[genre] || cultureImg;
+}
+
+function formatDateTime(dateStr?: string): string {
+  if (!dateStr) return "";
+  try {
+    return format(new Date(dateStr), "yyyy年M月d日 HH:mm", { locale: ja });
+  } catch {
+    return dateStr;
+  }
 }
 
 const submissionFormSchema = z.object({
@@ -59,12 +78,417 @@ const submissionFormSchema = z.object({
   eventDate: z.string().optional(),
   eventEndDate: z.string().optional(),
   eventLocation: z.string().max(200).optional(),
-  eventImageUrl: z.string().url().optional().or(z.literal("")),
+  eventMapUrl: z.string().optional().or(z.literal("")),
+  eventImageUrl: z.string().optional(),
   eventBeginnerWelcome: z.boolean().optional(),
-  eventSoloFriendliness: z.number().min(1).max(5).optional(),
 });
 
 type SubmissionFormData = z.infer<typeof submissionFormSchema>;
+
+const inquiryFormSchema = z.object({
+  name: z.string().max(100).optional(),
+  email: z.string().email("有効なメールアドレスを入力してください"),
+  message: z.string().min(1, "メッセージを入力してください").max(2000),
+});
+type InquiryFormData = z.infer<typeof inquiryFormSchema>;
+
+function SelectWithCustom({
+  options,
+  value,
+  onChange,
+  placeholder,
+  testId,
+}: {
+  options: readonly string[];
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  testId?: string;
+}) {
+  const isCustom = !!value && !options.includes(value as never);
+  const [showCustom, setShowCustom] = useState(isCustom);
+  const [customValue, setCustomValue] = useState(isCustom ? value : "");
+
+  const selectVal = showCustom ? "__custom__" : value || "";
+
+  return (
+    <div className="space-y-2">
+      <Select
+        value={selectVal}
+        onValueChange={(v) => {
+          if (v === "__custom__") {
+            setShowCustom(true);
+            onChange(customValue);
+          } else {
+            setShowCustom(false);
+            setCustomValue("");
+            onChange(v);
+          }
+        }}
+      >
+        <SelectTrigger className="rounded-xl" data-testid={testId}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+          ))}
+          <SelectItem value="__custom__">その他（自由入力）</SelectItem>
+        </SelectContent>
+      </Select>
+      {showCustom && (
+        <Input
+          value={customValue}
+          onChange={(e) => {
+            setCustomValue(e.target.value);
+            onChange(e.target.value);
+          }}
+          placeholder="自由に入力してください"
+          className="rounded-xl"
+          data-testid={testId ? `${testId}-custom` : undefined}
+        />
+      )}
+    </div>
+  );
+}
+
+function GroupDetailPreviewSheet({ data, open, onClose }: { data: Partial<SubmissionFormData>; open: boolean; onClose: () => void }) {
+  const imageUrl = data.eventImageUrl || getImageForGenre(data.groupGenre);
+  const hasLinks = data.groupInstagramUrl || data.groupTwitterUrl || data.groupLineUrl;
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0">
+        <SheetHeader className="p-6 pb-0">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit -ml-1 mb-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            プレビューを閉じる
+          </button>
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant="secondary" className="rounded-lg">{data.groupUniversity || "大学未設定"}</Badge>
+            {data.groupCategory && (
+              <Badge variant="outline" className="rounded-lg border-muted-foreground/20">{data.groupCategory}</Badge>
+            )}
+            {data.groupGenre && (
+              <Badge variant="outline" className="rounded-lg border-muted-foreground/20">{data.groupGenre}</Badge>
+            )}
+            <Badge className="bg-primary/10 text-primary border-0 rounded-lg">初心者歓迎</Badge>
+          </div>
+          <SheetTitle className="text-2xl font-bold leading-tight">
+            {data.groupName || "団体名"}
+          </SheetTitle>
+        </SheetHeader>
+
+        <div className="p-6 space-y-6">
+          <div className="w-full aspect-video bg-muted rounded-2xl overflow-hidden flex items-center justify-center">
+            {data.eventImageUrl ? (
+              <img src={data.eventImageUrl} alt={data.groupName} className="w-full h-full object-cover" />
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <Image className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">写真準備中</p>
+              </div>
+            )}
+          </div>
+
+          <Card className="rounded-2xl border-0 shadow-sm">
+            <CardContent className="p-6 space-y-5">
+              <p className="text-base leading-relaxed text-muted-foreground">
+                {data.groupDescription || "団体の説明がここに表示されます"}
+              </p>
+
+              {data.groupAtmosphereTags && data.groupAtmosphereTags.length > 0 && (
+                <>
+                  <div className="h-px bg-border" />
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">雰囲気</p>
+                    <div className="flex flex-wrap gap-2">
+                      {data.groupAtmosphereTags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="rounded-lg border-muted-foreground/20">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              <div className="h-px bg-border" />
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">団体の公式リンク</p>
+                {hasLinks ? (
+                  <div className="flex flex-wrap gap-3">
+                    {data.groupInstagramUrl && (
+                      <span className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-xl text-sm font-medium">
+                        <SiInstagram className="h-4 w-4" />
+                        Instagram
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      </span>
+                    )}
+                    {data.groupTwitterUrl && (
+                      <span className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-xl text-sm font-medium">
+                        <SiX className="h-4 w-4" />
+                        X (Twitter)
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      </span>
+                    )}
+                    {data.groupLineUrl && (
+                      <span className="inline-flex items-center gap-2 px-4 py-2 bg-muted rounded-xl text-sm font-medium">
+                        <SiLine className="h-4 w-4" />
+                        LINE
+                        <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">SNSリンクは掲載後に表示されます</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <p className="text-xs text-center text-muted-foreground bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-3">
+            ※ これは掲載後のプレビューです。実際の掲載内容は審査後に確定します。
+          </p>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function EventDetailPreviewSheet({ data, open, onClose }: { data: Partial<SubmissionFormData>; open: boolean; onClose: () => void }) {
+  const imageUrl = data.eventImageUrl || getImageForGenre(data.groupGenre);
+  const startLabel = data.eventDate ? formatDateTime(data.eventDate) : "日時未設定";
+  const endLabel = data.eventEndDate ? formatDateTime(data.eventEndDate) : null;
+
+  return (
+    <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto p-0">
+        <SheetHeader className="p-6 pb-0">
+          <button
+            onClick={onClose}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit -ml-1 mb-2"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            プレビューを閉じる
+          </button>
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <Badge variant="secondary" className="rounded-lg">{data.groupUniversity || "大学未設定"}</Badge>
+            {data.eventBeginnerWelcome && (
+              <Badge className="bg-primary/10 text-primary border-0 rounded-lg">初心者歓迎</Badge>
+            )}
+          </div>
+          <SheetTitle className="text-2xl font-bold leading-tight">
+            {data.eventTitle || "イベント名"}
+          </SheetTitle>
+          <p className="text-sm text-muted-foreground">{data.groupName || "団体名"}</p>
+        </SheetHeader>
+
+        <div className="p-6 space-y-6">
+          <div className="w-full aspect-video rounded-2xl overflow-hidden bg-muted flex items-center justify-center">
+            {imageUrl !== cultureImg || data.eventImageUrl ? (
+              <img src={imageUrl} alt={data.eventTitle} className="w-full h-full object-cover" />
+            ) : (
+              <div className="text-center text-muted-foreground">
+                <Image className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                <p className="text-sm">写真準備中</p>
+              </div>
+            )}
+          </div>
+
+          <Card className="rounded-2xl border-0 shadow-sm">
+            <CardContent className="p-6 space-y-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <Calendar className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">開始</p>
+                    <p className="font-medium text-sm">{startLabel}</p>
+                    {endLabel && (
+                      <>
+                        <p className="text-xs text-muted-foreground mt-1">終了</p>
+                        <p className="font-medium text-sm">{endLabel}</p>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                    <MapPin className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">開催場所</p>
+                    <p className="font-medium text-sm">{data.eventLocation || "未設定"}</p>
+                    {data.eventMapUrl && (
+                      <span className="inline-flex items-center gap-1 text-xs text-primary mt-1">
+                        <MapPin className="h-3 w-3" />
+                        地図で見る
+                        <ExternalLink className="h-3 w-3" />
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {data.eventDescription && (
+                <>
+                  <div className="h-px bg-border" />
+                  <p className="text-base leading-relaxed text-muted-foreground">{data.eventDescription}</p>
+                </>
+              )}
+
+              {data.groupAtmosphereTags && data.groupAtmosphereTags.length > 0 && (
+                <>
+                  <div className="h-px bg-border" />
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">雰囲気タグ</p>
+                    <div className="flex flex-wrap gap-2">
+                      {data.groupAtmosphereTags.map((tag) => (
+                        <Badge key={tag} variant="outline" className="rounded-lg border-muted-foreground/20">{tag}</Badge>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <p className="text-xs text-center text-muted-foreground bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-xl p-3">
+            ※ これは掲載後のプレビューです。実際の掲載内容は審査後に確定します。
+          </p>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function GroupPreviewCard({ data, onClick }: { data: Partial<SubmissionFormData>; onClick: () => void }) {
+  const imageUrl = data.eventImageUrl || getImageForGenre(data.groupGenre);
+
+  return (
+    <Card
+      className="overflow-hidden rounded-2xl border-0 shadow-sm cursor-pointer hover-elevate"
+      onClick={onClick}
+      data-testid="card-group-preview"
+    >
+      <div className="relative h-36 overflow-hidden">
+        <img src={imageUrl} alt={data.groupName || "団体"} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute top-3 right-3">
+          <Badge className="bg-black/50 text-white text-xs border-0 gap-1">
+            <Eye className="h-3 w-3" />
+            プレビュー
+          </Badge>
+        </div>
+        <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2 flex-wrap">
+          <Badge className="bg-white/90 text-foreground text-xs font-normal rounded-lg shadow-sm">
+            {data.groupUniversity || "大学未設定"}
+          </Badge>
+          {data.groupCategory && (
+            <Badge variant="outline" className="bg-white/90 text-foreground text-xs font-normal rounded-lg border-0 shadow-sm">
+              {data.groupCategory}
+            </Badge>
+          )}
+        </div>
+      </div>
+      <div className="p-5 space-y-3">
+        <div className="space-y-1">
+          <h3 className="font-semibold text-base leading-snug">
+            {data.groupName || "団体名"}
+          </h3>
+          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+            {data.groupDescription || "団体の説明がここに表示されます"}
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <Badge className="bg-primary/10 text-primary border-0 text-xs rounded-lg">初心者歓迎</Badge>
+          {data.groupGenre && (
+            <Badge variant="outline" className="text-xs rounded-lg border-muted-foreground/20">
+              {data.groupGenre}
+            </Badge>
+          )}
+        </div>
+        {data.groupAtmosphereTags && data.groupAtmosphereTags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {data.groupAtmosphereTags.slice(0, 3).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs font-normal rounded-lg border-muted-foreground/20">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-primary font-medium">タップして詳細を確認 →</p>
+      </div>
+    </Card>
+  );
+}
+
+function EventPreviewCard({ data, onClick }: { data: Partial<SubmissionFormData>; onClick: () => void }) {
+  const imageUrl = data.eventImageUrl || getImageForGenre(data.groupGenre);
+  const startLabel = data.eventDate ? formatDateTime(data.eventDate) : "日時未設定";
+  const endLabel = data.eventEndDate ? formatDateTime(data.eventEndDate) : null;
+
+  return (
+    <Card
+      className="overflow-hidden rounded-2xl border-0 shadow-sm cursor-pointer hover-elevate"
+      onClick={onClick}
+      data-testid="card-event-preview"
+    >
+      <div className="relative h-40 overflow-hidden">
+        <img src={imageUrl} alt={data.eventTitle || "イベント"} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+        <div className="absolute top-3 right-3">
+          <Badge className="bg-black/50 text-white text-xs border-0 gap-1">
+            <Eye className="h-3 w-3" />
+            プレビュー
+          </Badge>
+        </div>
+        <div className="absolute bottom-3 left-3 right-3">
+          <Badge className="bg-white/90 text-foreground text-xs font-normal rounded-lg shadow-sm">
+            {data.groupUniversity || "大学未設定"}
+          </Badge>
+        </div>
+      </div>
+      <div className="p-5 space-y-3">
+        <div className="space-y-1">
+          <h3 className="font-semibold text-base leading-snug line-clamp-2">
+            {data.eventTitle || "イベント名"}
+          </h3>
+          <p className="text-sm text-muted-foreground">{data.groupName || "団体名"}</p>
+        </div>
+        <div className="space-y-1.5 text-sm text-muted-foreground">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 shrink-0" />
+            <span>{startLabel}</span>
+          </div>
+          {endLabel && (
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 shrink-0" />
+              <span>〜 {endLabel}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 shrink-0" />
+            <span className="truncate">{data.eventLocation || "場所未設定"}</span>
+          </div>
+        </div>
+        {data.groupAtmosphereTags && data.groupAtmosphereTags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {data.groupAtmosphereTags.slice(0, 3).map((tag) => (
+              <Badge key={tag} variant="outline" className="text-xs font-normal rounded-lg border-muted-foreground/20">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        )}
+        <p className="text-xs text-primary font-medium">タップして詳細を確認 →</p>
+      </div>
+    </Card>
+  );
+}
 
 const faqs = [
   {
@@ -110,14 +534,9 @@ function FAQSection() {
         </div>
         <h2 className="text-xl font-bold">よくある質問</h2>
       </div>
-
       <div className="space-y-3">
         {faqs.map((faq, index) => (
-          <Collapsible
-            key={index}
-            open={openItems.has(index)}
-            onOpenChange={() => toggleItem(index)}
-          >
+          <Collapsible key={index} open={openItems.has(index)} onOpenChange={() => toggleItem(index)}>
             <Card className="rounded-2xl border-0 shadow-sm">
               <CollapsibleTrigger asChild>
                 <button
@@ -130,9 +549,7 @@ function FAQSection() {
               </CollapsibleTrigger>
               <CollapsibleContent>
                 <div className="px-5 pb-5 pt-0">
-                  <p className="text-muted-foreground leading-relaxed">
-                    {faq.answer}
-                  </p>
+                  <p className="text-muted-foreground leading-relaxed">{faq.answer}</p>
                 </div>
               </CollapsibleContent>
             </Card>
@@ -143,108 +560,115 @@ function FAQSection() {
   );
 }
 
-function GroupPreviewCard({ data }: { data: Partial<SubmissionFormData> }) {
-  const imageUrl = getImageForGenre(data.groupGenre);
-  
-  return (
-    <Card className="overflow-hidden rounded-2xl border-0 shadow-sm">
-      <div className="relative h-36 overflow-hidden">
-        <img src={imageUrl} alt={data.groupName || "団体"} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-          <Badge className="bg-white/90 text-foreground text-xs font-normal rounded-lg shadow-sm">
-            {data.groupUniversity || "大学未設定"}
-          </Badge>
-          {data.groupCategory && (
-            <Badge variant="outline" className="bg-white/90 text-foreground text-xs font-normal rounded-lg border-0 shadow-sm">
-              {data.groupCategory}
-            </Badge>
-          )}
-        </div>
-      </div>
-      <div className="p-5 space-y-3">
-        <div className="space-y-1">
-          <h3 className="font-semibold text-base leading-snug">
-            {data.groupName || "団体名"}
-          </h3>
-          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-            {data.groupDescription || "団体の説明がここに表示されます"}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          <Badge className="bg-primary/10 text-primary border-0 text-xs rounded-lg">
-            初心者歓迎
-          </Badge>
-          {data.groupGenre && (
-            <Badge variant="outline" className="text-xs rounded-lg border-muted-foreground/20">
-              {data.groupGenre}
-            </Badge>
-          )}
-        </div>
-        {data.groupAtmosphereTags && data.groupAtmosphereTags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {data.groupAtmosphereTags.map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs font-normal rounded-lg border-muted-foreground/20">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )}
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <Users className="h-4 w-4" />
-            <span>--人</span>
-          </div>
-        </div>
-      </div>
-    </Card>
-  );
-}
+function InquiryForm() {
+  const { toast } = useToast();
+  const [submitted, setSubmitted] = useState(false);
 
-function EventPreviewCard({ data }: { data: Partial<SubmissionFormData> }) {
-  const imageUrl = data.eventImageUrl || getImageForGenre(data.groupGenre);
-  
+  const form = useForm<InquiryFormData>({
+    resolver: zodResolver(inquiryFormSchema),
+    defaultValues: { name: "", email: "", message: "" },
+  });
+
+  const mutation = useMutation({
+    mutationFn: (data: InquiryFormData) => apiRequest("POST", "/api/contact", data),
+    onSuccess: () => {
+      setSubmitted(true);
+      form.reset();
+      toast({ title: "送信完了", description: "お問い合わせを受け付けました。" });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "送信に失敗しました",
+        description: error.message || "しばらく待ってから再度お試しください",
+        variant: "destructive",
+      });
+    },
+  });
+
+  if (submitted) {
+    return (
+      <Card className="rounded-2xl border-0 shadow-sm max-w-lg mx-auto">
+        <CardContent className="p-8 text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
+            </div>
+          </div>
+          <h2 className="text-xl font-bold" data-testid="text-inquiry-success">送信完了しました</h2>
+          <p className="text-muted-foreground">お問い合わせありがとうございます。内容を確認後、ご連絡いたします。</p>
+          <Button variant="outline" className="rounded-xl" onClick={() => setSubmitted(false)} data-testid="button-new-inquiry">
+            新しいお問い合わせ
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card className="overflow-hidden rounded-2xl border-0 shadow-sm">
-      <div className="relative h-40 overflow-hidden">
-        <img src={imageUrl} alt={data.eventTitle || "イベント"} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-        <div className="absolute bottom-3 left-3 right-3">
-          <Badge className="bg-white/90 text-foreground text-xs font-normal rounded-lg shadow-sm">
-            {data.groupUniversity || "大学未設定"}
-          </Badge>
-        </div>
-      </div>
-      <div className="p-5 space-y-4">
-        <div className="space-y-1">
-          <h3 className="font-semibold text-base leading-snug line-clamp-2">
-            {data.eventTitle || "イベント名"}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            {data.groupName || "団体名"}
-          </p>
-        </div>
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 shrink-0" />
-            <span>{data.eventDate || "日時未設定"}</span>
+    <div className="max-w-2xl mx-auto">
+      <Card className="rounded-2xl border-0 shadow-sm">
+        <CardHeader className="p-6 sm:p-8 pb-0">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+              <MessageSquare className="h-5 w-5 text-primary" />
+            </div>
+            <CardTitle className="text-xl">お問い合わせフォーム</CardTitle>
           </div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 shrink-0" />
-            <span className="truncate">{data.eventLocation || "場所未設定"}</span>
-          </div>
-        </div>
-        {data.groupAtmosphereTags && data.groupAtmosphereTags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {data.groupAtmosphereTags.slice(0, 3).map((tag) => (
-              <Badge key={tag} variant="outline" className="text-xs font-normal rounded-lg border-muted-foreground/20">
-                {tag}
-              </Badge>
-            ))}
-          </div>
-        )}
-      </div>
-    </Card>
+        </CardHeader>
+        <CardContent className="p-6 sm:p-8 pt-6">
+          <form onSubmit={form.handleSubmit((d) => mutation.mutate(d))} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="inquiry-name">お名前（任意）</Label>
+              <Input
+                id="inquiry-name"
+                placeholder="例: 田中太郎"
+                className="rounded-xl"
+                {...form.register("name")}
+                data-testid="input-inquiry-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inquiry-email">メールアドレス <span className="text-destructive">*</span></Label>
+              <Input
+                id="inquiry-email"
+                type="email"
+                placeholder="example@email.com"
+                className="rounded-xl"
+                {...form.register("email")}
+                data-testid="input-inquiry-email"
+              />
+              {form.formState.errors.email && (
+                <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inquiry-message">メッセージ <span className="text-destructive">*</span></Label>
+              <Textarea
+                id="inquiry-message"
+                placeholder="ご質問やご要望をお書きください"
+                rows={5}
+                className="rounded-xl resize-none"
+                {...form.register("message")}
+                data-testid="textarea-inquiry-message"
+              />
+              {form.formState.errors.message && (
+                <p className="text-sm text-destructive">{form.formState.errors.message.message}</p>
+              )}
+            </div>
+            <Button
+              type="submit"
+              size="lg"
+              className="w-full gap-2 rounded-xl"
+              disabled={mutation.isPending}
+              data-testid="button-inquiry-submit"
+            >
+              {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              送信する
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -252,6 +676,12 @@ export default function ContactPage() {
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
   const [showEventFields, setShowEventFields] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [customTagInput, setCustomTagInput] = useState("");
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [groupSheetOpen, setGroupSheetOpen] = useState(false);
+  const [eventSheetOpen, setEventSheetOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<SubmissionFormData>({
     resolver: zodResolver(submissionFormSchema),
@@ -274,9 +704,9 @@ export default function ContactPage() {
       eventDate: "",
       eventEndDate: "",
       eventLocation: "",
+      eventMapUrl: "",
       eventImageUrl: "",
       eventBeginnerWelcome: true,
-      eventSoloFriendliness: 3,
     },
   });
 
@@ -292,16 +722,42 @@ export default function ContactPage() {
     }
   };
 
+  const addCustomTag = () => {
+    const trimmed = customTagInput.trim();
+    if (!trimmed) return;
+    const current = form.getValues("groupAtmosphereTags") || [];
+    if (!current.includes(trimmed)) {
+      form.setValue("groupAtmosphereTags", [...current, trimmed], { shouldValidate: true });
+    }
+    setCustomTagInput("");
+  };
+
+  const removeTag = (tag: string) => {
+    const current = form.getValues("groupAtmosphereTags") || [];
+    form.setValue("groupAtmosphereTags", current.filter(t => t !== tag), { shouldValidate: true });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "ファイルが大きすぎます", description: "5MB以下のファイルを選択してください", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const base64 = ev.target?.result as string;
+      setImagePreview(base64);
+      form.setValue("eventImageUrl", base64);
+    };
+    reader.readAsDataURL(file);
+  };
+
   const mutation = useMutation({
-    mutationFn: async (data: SubmissionFormData) => {
-      return apiRequest("POST", "/api/submissions", data);
-    },
+    mutationFn: (data: SubmissionFormData) => apiRequest("POST", "/api/submissions", data),
     onSuccess: () => {
       setSubmitted(true);
-      toast({
-        title: "送信完了",
-        description: "掲載依頼を受け付けました。確認後、メールでご連絡いたします。",
-      });
+      toast({ title: "送信完了", description: "掲載依頼を受け付けました。確認後、メールでご連絡いたします。" });
     },
     onError: (error: Error) => {
       toast({
@@ -313,6 +769,10 @@ export default function ContactPage() {
   });
 
   const onSubmit = (data: SubmissionFormData) => {
+    if (!consentAccepted) {
+      toast({ title: "同意が必要です", description: "送信前に同意事項をご確認ください", variant: "destructive" });
+      return;
+    }
     mutation.mutate(data);
   };
 
@@ -329,8 +789,7 @@ export default function ContactPage() {
               </div>
               <h2 className="text-xl font-bold" data-testid="text-submit-success">送信完了しました</h2>
               <p className="text-muted-foreground">
-                掲載依頼ありがとうございます。
-                内容を確認後、ご入力いただいたメールアドレスにご連絡いたします。
+                掲載依頼ありがとうございます。内容を確認後、ご入力いただいたメールアドレスにご連絡いたします。
               </p>
               <Button
                 variant="outline"
@@ -338,9 +797,11 @@ export default function ContactPage() {
                 onClick={() => {
                   setSubmitted(false);
                   setShowEventFields(false);
+                  setImagePreview(null);
+                  setConsentAccepted(false);
                   form.reset();
                 }}
-                data-testid="button-new-inquiry"
+                data-testid="button-new-submission"
               >
                 新しい掲載依頼
               </Button>
@@ -358,355 +819,501 @@ export default function ContactPage() {
         <div className="text-center space-y-4 pb-6 border-b relative z-10">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight" data-testid="page-title">お問い合わせ＆掲載依頼</h1>
           <p className="text-lg text-muted-foreground">
-            団体やイベントの掲載をご希望の方はこちらから
+            団体やイベントの掲載をご希望の方、ご質問のある方はこちらから
           </p>
         </div>
 
         <Tabs defaultValue="submission" className="relative z-10">
-          <TabsList className="grid w-full grid-cols-2 rounded-xl">
+          <TabsList className="grid w-full grid-cols-3 rounded-xl">
             <TabsTrigger value="submission" className="rounded-xl" data-testid="tab-submission">掲載依頼</TabsTrigger>
+            <TabsTrigger value="inquiry" className="rounded-xl" data-testid="tab-inquiry">お問い合わせ</TabsTrigger>
             <TabsTrigger value="faq" className="rounded-xl" data-testid="tab-faq">よくある質問</TabsTrigger>
           </TabsList>
 
+          {/* ===== 掲載依頼タブ ===== */}
           <TabsContent value="submission" className="mt-8">
-            <div className="grid lg:grid-cols-5 gap-8">
-              <div className="lg:col-span-3">
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-                  <Card className="rounded-2xl border-0 shadow-sm">
-                    <CardHeader className="p-6 sm:p-8 pb-0">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+              {/* 申請者情報 */}
+              <Card className="rounded-2xl border-0 shadow-sm">
+                <CardHeader className="p-6 sm:p-8 pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Mail className="h-5 w-5 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl">申請者情報</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 sm:p-8 pt-6 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="requesterEmail">メールアドレス <span className="text-destructive">*</span></Label>
+                    <Input
+                      id="requesterEmail"
+                      type="email"
+                      placeholder="example@email.com"
+                      className="rounded-xl"
+                      {...form.register("requesterEmail")}
+                      data-testid="input-email"
+                    />
+                    {form.formState.errors.requesterEmail && (
+                      <p className="text-sm text-destructive">{form.formState.errors.requesterEmail.message}</p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="requesterName">お名前 / 担当者名（任意）</Label>
+                    <Input
+                      id="requesterName"
+                      placeholder="例: 田中太郎"
+                      className="rounded-xl"
+                      {...form.register("requesterName")}
+                      data-testid="input-name"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* 団体情報 */}
+              <Card className="rounded-2xl border-0 shadow-sm">
+                <CardHeader className="p-6 sm:p-8 pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Users className="h-5 w-5 text-primary" />
+                    </div>
+                    <CardTitle className="text-xl">団体情報 <span className="text-destructive text-sm font-normal">（必須）</span></CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-6 sm:p-8 pt-6 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="groupName">団体名 <span className="text-destructive">*</span></Label>
+                    <Input
+                      id="groupName"
+                      placeholder="例: 岡大バレーボールサークル"
+                      className="rounded-xl"
+                      {...form.register("groupName")}
+                      data-testid="input-group-name"
+                    />
+                    {form.formState.errors.groupName && (
+                      <p className="text-sm text-destructive">{form.formState.errors.groupName.message}</p>
+                    )}
+                  </div>
+
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>大学 <span className="text-destructive">*</span></Label>
+                      <SelectWithCustom
+                        options={universities}
+                        value={form.watch("groupUniversity") || ""}
+                        onChange={(v) => form.setValue("groupUniversity", v, { shouldValidate: true })}
+                        placeholder="選択してください"
+                        testId="select-university"
+                      />
+                      {form.formState.errors.groupUniversity && (
+                        <p className="text-sm text-destructive">{form.formState.errors.groupUniversity.message}</p>
+                      )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label>区分 <span className="text-destructive">*</span></Label>
+                      <SelectWithCustom
+                        options={groupCategories}
+                        value={form.watch("groupCategory") || ""}
+                        onChange={(v) => form.setValue("groupCategory", v, { shouldValidate: true })}
+                        placeholder="選択してください"
+                        testId="select-category"
+                      />
+                      {form.formState.errors.groupCategory && (
+                        <p className="text-sm text-destructive">{form.formState.errors.groupCategory.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>ジャンル <span className="text-destructive">*</span></Label>
+                    <SelectWithCustom
+                      options={genres}
+                      value={form.watch("groupGenre") || ""}
+                      onChange={(v) => form.setValue("groupGenre", v, { shouldValidate: true })}
+                      placeholder="選択してください"
+                      testId="select-genre"
+                    />
+                    {form.formState.errors.groupGenre && (
+                      <p className="text-sm text-destructive">{form.formState.errors.groupGenre.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="groupDescription">団体説明 <span className="text-destructive">*</span></Label>
+                    <Textarea
+                      id="groupDescription"
+                      placeholder="活動内容や魅力を教えてください"
+                      rows={3}
+                      className="rounded-xl resize-none"
+                      {...form.register("groupDescription")}
+                      data-testid="textarea-group-description"
+                    />
+                    {form.formState.errors.groupDescription && (
+                      <p className="text-sm text-destructive">{form.formState.errors.groupDescription.message}</p>
+                    )}
+                  </div>
+
+                  {/* 雰囲気タグ */}
+                  <div className="space-y-3">
+                    <Label>雰囲気タグ <span className="text-destructive">*</span></Label>
+                    <div className="flex flex-wrap gap-2">
+                      {allAtmosphereTags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => toggleTag(tag)}
+                          className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
+                            selectedTags.includes(tag)
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-background border-muted-foreground/20 hover:border-primary/50"
+                          }`}
+                          data-testid={`tag-${tag}`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* カスタムタグ追加 */}
+                    <div className="flex gap-2">
+                      <Input
+                        value={customTagInput}
+                        onChange={(e) => setCustomTagInput(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addCustomTag(); } }}
+                        placeholder="カスタムタグを追加..."
+                        className="rounded-xl text-sm"
+                        data-testid="input-custom-tag"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={addCustomTag}
+                        className="rounded-xl shrink-0 gap-1"
+                        data-testid="button-add-tag"
+                      >
+                        <Plus className="h-4 w-4" />
+                        追加
+                      </Button>
+                    </div>
+
+                    {/* カスタムタグ表示 */}
+                    {selectedTags.filter(t => !allAtmosphereTags.includes(t as never)).length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedTags.filter(t => !allAtmosphereTags.includes(t as never)).map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 text-sm rounded-lg bg-primary text-primary-foreground"
+                          >
+                            {tag}
+                            <button type="button" onClick={() => removeTag(tag)} data-testid={`remove-tag-${tag}`}>
+                              <X className="h-3 w-3" />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {form.formState.errors.groupAtmosphereTags && (
+                      <p className="text-sm text-destructive">{form.formState.errors.groupAtmosphereTags.message}</p>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="groupContactInfo">連絡先（任意）</Label>
+                    <Input
+                      id="groupContactInfo"
+                      placeholder="例: example@email.com"
+                      className="rounded-xl"
+                      {...form.register("groupContactInfo")}
+                      data-testid="input-group-contact"
+                    />
+                  </div>
+
+                  <div className="grid sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="groupInstagramUrl">Instagram URL</Label>
+                      <Input
+                        id="groupInstagramUrl"
+                        placeholder="https://..."
+                        className="rounded-xl"
+                        {...form.register("groupInstagramUrl")}
+                        data-testid="input-instagram"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="groupTwitterUrl">X (Twitter) URL</Label>
+                      <Input
+                        id="groupTwitterUrl"
+                        placeholder="https://..."
+                        className="rounded-xl"
+                        {...form.register("groupTwitterUrl")}
+                        data-testid="input-twitter"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="groupLineUrl">LINE URL</Label>
+                      <Input
+                        id="groupLineUrl"
+                        placeholder="https://..."
+                        className="rounded-xl"
+                        {...form.register("groupLineUrl")}
+                        data-testid="input-line"
+                      />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* イベント情報 */}
+              <Card className="rounded-2xl border-0 shadow-sm">
+                <Collapsible open={showEventFields} onOpenChange={setShowEventFields}>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      type="button"
+                      className="w-full p-6 sm:p-8 flex items-center justify-between text-left hover-elevate rounded-2xl"
+                      data-testid="toggle-event-section"
+                    >
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <Mail className="h-5 w-5 text-primary" />
+                          <Calendar className="h-5 w-5 text-primary" />
                         </div>
-                        <CardTitle className="text-xl">申請者情報</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-6 sm:p-8 pt-6 space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="requesterEmail">メールアドレス <span className="text-destructive">*</span></Label>
-                        <Input
-                          id="requesterEmail"
-                          type="email"
-                          placeholder="example@email.com"
-                          className="rounded-xl"
-                          {...form.register("requesterEmail")}
-                          data-testid="input-email"
-                        />
-                        {form.formState.errors.requesterEmail && (
-                          <p className="text-sm text-destructive">{form.formState.errors.requesterEmail.message}</p>
-                        )}
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="requesterName">お名前 / 担当者名（任意）</Label>
-                        <Input
-                          id="requesterName"
-                          placeholder="例: 田中太郎"
-                          className="rounded-xl"
-                          {...form.register("requesterName")}
-                          data-testid="input-name"
-                        />
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="rounded-2xl border-0 shadow-sm">
-                    <CardHeader className="p-6 sm:p-8 pb-0">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="text-xl font-semibold">イベント情報</h3>
+                          <p className="text-sm text-muted-foreground">任意 — イベントも同時に掲載する場合</p>
                         </div>
-                        <CardTitle className="text-xl">団体情報 <span className="text-destructive text-sm font-normal">（必須）</span></CardTitle>
                       </div>
-                    </CardHeader>
-                    <CardContent className="p-6 sm:p-8 pt-6 space-y-4">
+                      <ChevronDown className={`h-5 w-5 text-muted-foreground shrink-0 transition-transform ${showEventFields ? 'rotate-180' : ''}`} />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <CardContent className="p-6 sm:p-8 pt-0 space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="groupName">団体名 <span className="text-destructive">*</span></Label>
+                        <Label htmlFor="eventTitle">イベント名</Label>
                         <Input
-                          id="groupName"
-                          placeholder="例: 岡大バレーボールサークル"
+                          id="eventTitle"
+                          placeholder="例: 新歓バレーボール体験会"
                           className="rounded-xl"
-                          {...form.register("groupName")}
-                          data-testid="input-group-name"
+                          {...form.register("eventTitle")}
+                          data-testid="input-event-title"
                         />
-                        {form.formState.errors.groupName && (
-                          <p className="text-sm text-destructive">{form.formState.errors.groupName.message}</p>
-                        )}
                       </div>
 
+                      <div className="space-y-2">
+                        <Label htmlFor="eventDescription">イベント説明</Label>
+                        <Textarea
+                          id="eventDescription"
+                          placeholder="イベントの詳細を入力してください"
+                          rows={3}
+                          className="rounded-xl resize-none"
+                          {...form.register("eventDescription")}
+                          data-testid="textarea-event-description"
+                        />
+                      </div>
+
+                      {/* 開始・終了時間 */}
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>大学 <span className="text-destructive">*</span></Label>
-                          <Select
-                            value={form.watch("groupUniversity") || ""}
-                            onValueChange={(v) => form.setValue("groupUniversity", v, { shouldValidate: true })}
-                          >
-                            <SelectTrigger className="rounded-xl" data-testid="select-university">
-                              <SelectValue placeholder="選択してください" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {universities.map((uni) => (
-                                <SelectItem key={uni} value={uni}>{uni}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {form.formState.errors.groupUniversity && (
-                            <p className="text-sm text-destructive">{form.formState.errors.groupUniversity.message}</p>
-                          )}
+                          <Label htmlFor="eventDate">開始日時</Label>
+                          <Input
+                            id="eventDate"
+                            type="datetime-local"
+                            className="rounded-xl"
+                            {...form.register("eventDate")}
+                            data-testid="input-event-date"
+                          />
                         </div>
                         <div className="space-y-2">
-                          <Label>区分 <span className="text-destructive">*</span></Label>
-                          <Select
-                            value={form.watch("groupCategory") || ""}
-                            onValueChange={(v) => form.setValue("groupCategory", v, { shouldValidate: true })}
-                          >
-                            <SelectTrigger className="rounded-xl" data-testid="select-category">
-                              <SelectValue placeholder="選択してください" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {groupCategories.map((cat) => (
-                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          {form.formState.errors.groupCategory && (
-                            <p className="text-sm text-destructive">{form.formState.errors.groupCategory.message}</p>
-                          )}
+                          <Label htmlFor="eventEndDate">終了日時</Label>
+                          <Input
+                            id="eventEndDate"
+                            type="datetime-local"
+                            className="rounded-xl"
+                            {...form.register("eventEndDate")}
+                            data-testid="input-event-end-date"
+                          />
                         </div>
                       </div>
 
+                      {/* 開催場所 + マップURL */}
                       <div className="space-y-2">
-                        <Label>ジャンル <span className="text-destructive">*</span></Label>
-                        <Select
-                          value={form.watch("groupGenre") || ""}
-                          onValueChange={(v) => form.setValue("groupGenre", v, { shouldValidate: true })}
-                        >
-                          <SelectTrigger className="rounded-xl" data-testid="select-genre">
-                            <SelectValue placeholder="選択してください" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {genres.map((g) => (
-                              <SelectItem key={g} value={g}>{g}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {form.formState.errors.groupGenre && (
-                          <p className="text-sm text-destructive">{form.formState.errors.groupGenre.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="groupDescription">団体説明 <span className="text-destructive">*</span></Label>
-                        <Textarea
-                          id="groupDescription"
-                          placeholder="活動内容や魅力を教えてください"
-                          rows={3}
-                          className="rounded-xl resize-none"
-                          {...form.register("groupDescription")}
-                          data-testid="textarea-group-description"
-                        />
-                        {form.formState.errors.groupDescription && (
-                          <p className="text-sm text-destructive">{form.formState.errors.groupDescription.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label>雰囲気タグ <span className="text-destructive">*</span></Label>
-                        <div className="flex flex-wrap gap-2">
-                          {allAtmosphereTags.map((tag) => (
-                            <button
-                              key={tag}
-                              type="button"
-                              onClick={() => toggleTag(tag)}
-                              className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
-                                selectedTags.includes(tag)
-                                  ? "bg-primary text-primary-foreground border-primary"
-                                  : "bg-background border-muted-foreground/20 hover:border-primary/50"
-                              }`}
-                              data-testid={`tag-${tag}`}
-                            >
-                              {tag}
-                            </button>
-                          ))}
-                        </div>
-                        {form.formState.errors.groupAtmosphereTags && (
-                          <p className="text-sm text-destructive">{form.formState.errors.groupAtmosphereTags.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="groupContactInfo">連絡先（任意）</Label>
+                        <Label htmlFor="eventLocation">開催場所</Label>
                         <Input
-                          id="groupContactInfo"
-                          placeholder="例: example@email.com"
+                          id="eventLocation"
+                          placeholder="例: 岡山大学体育館"
                           className="rounded-xl"
-                          {...form.register("groupContactInfo")}
-                          data-testid="input-group-contact"
+                          {...form.register("eventLocation")}
+                          data-testid="input-event-location"
                         />
                       </div>
-
-                      <div className="grid sm:grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="groupInstagramUrl">Instagram URL</Label>
-                          <Input
-                            id="groupInstagramUrl"
-                            placeholder="https://..."
-                            className="rounded-xl"
-                            {...form.register("groupInstagramUrl")}
-                            data-testid="input-instagram"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="groupTwitterUrl">X (Twitter) URL</Label>
-                          <Input
-                            id="groupTwitterUrl"
-                            placeholder="https://..."
-                            className="rounded-xl"
-                            {...form.register("groupTwitterUrl")}
-                            data-testid="input-twitter"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="groupLineUrl">LINE URL</Label>
-                          <Input
-                            id="groupLineUrl"
-                            placeholder="https://..."
-                            className="rounded-xl"
-                            {...form.register("groupLineUrl")}
-                            data-testid="input-line"
-                          />
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="rounded-2xl border-0 shadow-sm">
-                    <Collapsible open={showEventFields} onOpenChange={setShowEventFields}>
-                      <CollapsibleTrigger asChild>
-                        <button
-                          type="button"
-                          className="w-full p-6 sm:p-8 flex items-center justify-between text-left hover-elevate rounded-2xl"
-                          data-testid="toggle-event-section"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                              <Calendar className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="text-xl font-semibold">イベント情報</h3>
-                              <p className="text-sm text-muted-foreground">任意 - イベントも同時に掲載する場合</p>
-                            </div>
-                          </div>
-                          <ChevronDown className={`h-5 w-5 text-muted-foreground shrink-0 transition-transform ${showEventFields ? 'rotate-180' : ''}`} />
-                        </button>
-                      </CollapsibleTrigger>
-                      <CollapsibleContent>
-                        <CardContent className="p-6 sm:p-8 pt-0 space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="eventTitle">イベント名</Label>
-                            <Input
-                              id="eventTitle"
-                              placeholder="例: 新歓バレーボール体験会"
-                              className="rounded-xl"
-                              {...form.register("eventTitle")}
-                              data-testid="input-event-title"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="eventDescription">イベント説明</Label>
-                            <Textarea
-                              id="eventDescription"
-                              placeholder="イベントの詳細を入力してください"
-                              rows={3}
-                              className="rounded-xl resize-none"
-                              {...form.register("eventDescription")}
-                              data-testid="textarea-event-description"
-                            />
-                          </div>
-                          <div className="grid sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="eventDate">日時</Label>
-                              <Input
-                                id="eventDate"
-                                placeholder="例: 2026-04-10T14:00"
-                                type="datetime-local"
-                                className="rounded-xl"
-                                {...form.register("eventDate")}
-                                data-testid="input-event-date"
-                              />
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="eventLocation">場所</Label>
-                              <Input
-                                id="eventLocation"
-                                placeholder="例: 岡山大学体育館"
-                                className="rounded-xl"
-                                {...form.register("eventLocation")}
-                                data-testid="input-event-location"
-                              />
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="eventImageUrl">画像URL（任意）</Label>
-                            <Input
-                              id="eventImageUrl"
-                              placeholder="https://..."
-                              className="rounded-xl"
-                              {...form.register("eventImageUrl")}
-                              data-testid="input-event-image"
-                            />
-                          </div>
-                        </CardContent>
-                      </CollapsibleContent>
-                    </Collapsible>
-                  </Card>
-
-                  <Card className="rounded-2xl border-0 shadow-sm">
-                    <CardContent className="p-6 sm:p-8 space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="message">その他メッセージ（任意）</Label>
-                        <Textarea
-                          id="message"
-                          placeholder="ご質問やご要望があればお書きください"
-                          rows={3}
-                          className="rounded-xl resize-none"
-                          {...form.register("message")}
-                          data-testid="textarea-message"
+                        <Label htmlFor="eventMapUrl">開催場所のマップURL（任意）</Label>
+                        <Input
+                          id="eventMapUrl"
+                          placeholder="https://maps.google.com/..."
+                          className="rounded-xl"
+                          {...form.register("eventMapUrl")}
+                          data-testid="input-event-map-url"
                         />
+                        <p className="text-xs text-muted-foreground">Google マップなどのURLを入力してください</p>
                       </div>
-                      <Button
-                        type="submit"
-                        size="lg"
-                        className="w-full gap-2 rounded-xl"
-                        disabled={mutation.isPending}
-                        data-testid="button-submit"
-                      >
-                        {mutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Send className="h-4 w-4" />
-                        )}
-                        掲載依頼を送信する
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </form>
-              </div>
 
-              <div className="lg:col-span-2">
-                <div className="sticky top-24 space-y-4">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Eye className="h-4 w-4" />
-                    <span>掲載後のプレビュー</span>
+                      {/* 画像アップロード */}
+                      <div className="space-y-2">
+                        <Label>イベント画像（任意）</Label>
+                        <div
+                          className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-6 text-center cursor-pointer hover:border-primary/40 transition-colors"
+                          onClick={() => fileInputRef.current?.click()}
+                          data-testid="dropzone-image"
+                        >
+                          {imagePreview ? (
+                            <div className="space-y-3">
+                              <img
+                                src={imagePreview}
+                                alt="プレビュー"
+                                className="max-h-48 mx-auto rounded-xl object-cover"
+                              />
+                              <p className="text-sm text-muted-foreground">クリックして変更</p>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex justify-center">
+                                <Upload className="h-8 w-8 text-muted-foreground/50" />
+                              </div>
+                              <p className="text-sm font-medium">クリックして画像を選択</p>
+                              <p className="text-xs text-muted-foreground">JPG, PNG, WebP — 最大5MB</p>
+                            </div>
+                          )}
+                        </div>
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp"
+                          className="hidden"
+                          onChange={handleImageChange}
+                          data-testid="input-event-image"
+                        />
+                        {imagePreview && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive rounded-xl"
+                            onClick={() => {
+                              setImagePreview(null);
+                              form.setValue("eventImageUrl", "");
+                              if (fileInputRef.current) fileInputRef.current.value = "";
+                            }}
+                            data-testid="button-remove-image"
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            画像を削除
+                          </Button>
+                        )}
+                      </div>
+                    </CardContent>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+
+              {/* その他メッセージ */}
+              <Card className="rounded-2xl border-0 shadow-sm">
+                <CardContent className="p-6 sm:p-8 space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="message">その他メッセージ（任意）</Label>
+                    <Textarea
+                      id="message"
+                      placeholder="ご質問やご要望があればお書きください"
+                      rows={3}
+                      className="rounded-xl resize-none"
+                      {...form.register("message")}
+                      data-testid="textarea-message"
+                    />
                   </div>
-                  <GroupPreviewCard data={watchedData} />
+                </CardContent>
+              </Card>
+
+              {/* 同意文 */}
+              <Card className="rounded-2xl border-0 shadow-sm bg-muted/40">
+                <CardContent className="p-6 sm:p-8 space-y-4">
+                  <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
+                    <p>
+                      本アンケートで提供いただいた団体情報（文章・画像等）は、
+                      サークル紹介サイトおよび関連するSNS（Instagram等）で紹介・掲載する場合があります。
+                    </p>
+                    <p>
+                      また、掲載の際には読みやすさ向上のため、内容の趣旨を変えない範囲で文章の修正や要約を行うことがあります。
+                    </p>
+                    <p>
+                      アンケートの送信をもって、上記内容に同意いただいたものとみなします。
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Checkbox
+                      id="consent"
+                      checked={consentAccepted}
+                      onCheckedChange={(checked) => setConsentAccepted(checked === true)}
+                      data-testid="checkbox-consent"
+                    />
+                    <Label htmlFor="consent" className="text-sm font-medium cursor-pointer">
+                      上記内容に同意します <span className="text-destructive">*</span>
+                    </Label>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full gap-2 rounded-xl"
+                disabled={mutation.isPending || !consentAccepted}
+                data-testid="button-submit"
+              >
+                {mutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="h-4 w-4" />
+                )}
+                掲載依頼を送信する
+              </Button>
+
+              {/* プレビュー (ボトム) */}
+              <div className="space-y-4 pt-4 border-t">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Eye className="h-4 w-4" />
+                  <span className="font-medium">掲載後のプレビュー</span>
+                  <span className="text-xs">— カードをクリックして詳細を確認</span>
+                </div>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <GroupPreviewCard data={watchedData} onClick={() => setGroupSheetOpen(true)} />
                   {showEventFields && watchedData.eventTitle && (
-                    <EventPreviewCard data={watchedData} />
+                    <EventPreviewCard data={watchedData} onClick={() => setEventSheetOpen(true)} />
                   )}
                 </div>
               </div>
-            </div>
+            </form>
+
+            {/* Preview Sheets (outside form but inside tab) */}
+            <GroupDetailPreviewSheet
+              data={watchedData}
+              open={groupSheetOpen}
+              onClose={() => setGroupSheetOpen(false)}
+            />
+            <EventDetailPreviewSheet
+              data={watchedData}
+              open={eventSheetOpen}
+              onClose={() => setEventSheetOpen(false)}
+            />
           </TabsContent>
 
+          {/* ===== お問い合わせタブ ===== */}
+          <TabsContent value="inquiry" className="mt-8">
+            <InquiryForm />
+          </TabsContent>
+
+          {/* ===== よくある質問タブ ===== */}
           <TabsContent value="faq" className="mt-8">
             <FAQSection />
           </TabsContent>

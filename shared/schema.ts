@@ -99,6 +99,7 @@ export const submissions = pgTable("submissions", {
   eventImageUrl: text("event_image_url"),
   eventBeginnerWelcome: boolean("event_beginner_welcome"),
   eventSoloFriendliness: integer("event_solo_friendliness"),
+  eventMapUrl: text("event_map_url"),
   status: text("status").notNull().default('pending'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

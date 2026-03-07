@@ -96,6 +96,28 @@ export async function sendAdminNotification(submission: Submission): Promise<boo
   return sendMail(adminEmail, subject, body);
 }
 
+export async function sendContactNotification(data: { name?: string; email: string; message: string }): Promise<boolean> {
+  const adminEmail = process.env.ADMIN_EMAIL;
+  if (!adminEmail) {
+    console.warn("[mail] ADMIN_EMAIL not set — skipping contact notification.");
+    return false;
+  }
+
+  const subject = `【新歓ナビ】お問い合わせ: ${data.name || data.email}`;
+  const body = [
+    `新しいお問い合わせが届きました。`,
+    ``,
+    `--- 送信者情報 ---`,
+    `メール: ${data.email}`,
+    data.name ? `名前: ${data.name}` : null,
+    ``,
+    `--- メッセージ ---`,
+    data.message,
+  ].filter(Boolean).join('\n');
+
+  return sendMail(adminEmail, subject, body);
+}
+
 export async function sendApprovalNotification(submission: Submission): Promise<boolean> {
   const subject = `【新歓ナビ】掲載が承認されました: ${submission.groupName}`;
   const body = [

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { insertSubmissionSchema } from "@shared/schema";
-import { sendAdminNotification, sendApprovalNotification } from "./services/mail";
+import { sendAdminNotification, sendApprovalNotification, sendContactNotification } from "./services/mail";
 
 const adminAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers["x-admin-key"];
@@ -178,6 +178,8 @@ export async function registerRoutes(
         groupGenre: z.string().min(1, "ジャンルは必須です"),
         groupDescription: z.string().min(1, "団体説明は必須です").max(2000),
         groupAtmosphereTags: z.array(z.string()).min(1, "雰囲気タグを1つ以上選択してください"),
+        eventMapUrl: z.string().optional().nullable(),
+        eventImageUrl: z.string().optional().nullable(),
       });
 
       const validatedData = submissionSchema.parse(req.body);
@@ -245,6 +247,7 @@ export async function registerRoutes(
           soloFriendliness: submission.eventSoloFriendliness ?? 3,
           atmosphereTags: submission.groupAtmosphereTags,
           imageUrl: submission.eventImageUrl,
+          mapUrl: submission.eventMapUrl,
           status: "approved",
         });
       }
@@ -259,6 +262,27 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Error approving submission:", error);
       res.status(500).json({ error: "承認処理に失敗しました" });
+    }
+  });
+
+  app.post("/api/contact", async (req, res) => {
+    try {
+      const contactSchema = z.object({
+        name: z.string().max(100).optional(),
+        email: z.string().email("有効なメールアドレスを入力してください"),
+        message: z.string().min(1, "メッセージを入力してください").max(2000),
+      });
+      const validatedData = contactSchema.parse(req.body);
+      sendContactNotification(validatedData).catch((err) => {
+        console.error("[mail] Contact notification failed (non-blocking):", err);
+      });
+      res.status(200).json({ success: true });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: "入力内容に不備があります", details: error.errors });
+      }
+      console.error("Error processing contact:", error);
+      res.status(500).json({ error: "送信に失敗しました" });
     }
   });
 
