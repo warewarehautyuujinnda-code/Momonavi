@@ -1288,7 +1288,7 @@ export default function ContactPage() {
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <GroupPreviewCard data={watchedData} onClick={() => setGroupSheetOpen(true)} />
-                  {showEventFields && watchedData.eventTitle && (
+                  {showEventFields && (
                     <EventPreviewCard data={watchedData} onClick={() => setEventSheetOpen(true)} />
                   )}
                 </div>
