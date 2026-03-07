@@ -1,8 +1,6 @@
 import { useParams, Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { Layout } from "@/components/layout/layout";
-import { ReviewSection } from "@/components/events/review-section";
-import { ReviewForm } from "@/components/events/review-form";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -22,71 +20,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import type { EventWithGroup, Review, Event } from "@shared/schema";
-
-function SoloFriendlinessBar({ level, eventCount, hasData }: { level: number; eventCount?: number; hasData: boolean }) {
-  if (!hasData) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">1人参加しやすさ</span>
-          <span className="text-sm text-muted-foreground">過去データなし</span>
-        </div>
-        <div className="flex gap-1.5">
-          {[1, 2, 3, 4, 5].map((i) => (
-            <div
-              key={i}
-              className="h-2.5 flex-1 rounded-full bg-muted"
-            />
-          ))}
-        </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          この団体のイベントデータがまだありません
-        </p>
-      </div>
-    );
-  }
-
-  const displayLevel = Math.round(level * 10) / 10;
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">
-          1人参加しやすさ
-          {eventCount !== undefined && eventCount > 0 && (
-            <span className="ml-1 text-xs">（{eventCount}件のイベントデータから算出）</span>
-          )}
-        </span>
-        <span className="text-lg font-semibold text-primary">{displayLevel}/5</span>
-      </div>
-      <div className="flex gap-1.5">
-        {[1, 2, 3, 4, 5].map((i) => {
-          const fillPercentage = Math.min(1, Math.max(0, level - (i - 1))) * 100;
-          return (
-            <div
-              key={i}
-              className="h-2.5 flex-1 rounded-full bg-muted overflow-hidden"
-            >
-              <div
-                className="h-full bg-primary rounded-full"
-                style={{ width: `${fillPercentage}%` }}
-              />
-            </div>
-          );
-        })}
-      </div>
-      <p className="text-sm text-muted-foreground leading-relaxed">
-        {level >= 4
-          ? "1人での参加者が多く、とても参加しやすい雰囲気です"
-          : level >= 3
-          ? "1人でも参加しやすいイベントです"
-          : level >= 2
-          ? "友達と一緒の参加がおすすめです"
-          : "グループでの参加が多いイベントです"}
-      </p>
-    </div>
-  );
-}
+import type { EventWithGroup, Event } from "@shared/schema";
 
 function generateGoogleCalendarUrl(event: EventWithGroup): string {
   const startDate = new Date(event.date);
@@ -146,15 +80,6 @@ export default function EventDetailPage() {
 
   const { data: event, isLoading: eventLoading } = useQuery<EventWithGroup>({
     queryKey: ["/api/events", id],
-  });
-
-  const { data: reviews, isLoading: reviewsLoading } = useQuery<Review[]>({
-    queryKey: ["/api/events", id, "reviews"],
-  });
-
-  const { data: groupEventStats } = useQuery<{ averageSoloFriendliness: number; eventCount: number }>({
-    queryKey: ["/api/groups", event?.groupId, "review-stats"],
-    enabled: !!event?.groupId,
   });
 
   const { data: pastEvents } = useQuery<Event[]>({
@@ -350,14 +275,6 @@ export default function EventDetailPage() {
                 </Button>
               </div>
 
-              <div className="h-px bg-border" />
-
-              <SoloFriendlinessBar 
-                level={groupEventStats?.eventCount ? groupEventStats.averageSoloFriendliness : 0} 
-                eventCount={groupEventStats?.eventCount}
-                hasData={!!groupEventStats?.eventCount}
-              />
-
               {event.atmosphereTags && event.atmosphereTags.length > 0 && (
                 <>
                   <div className="h-px bg-border" />
@@ -428,25 +345,6 @@ export default function EventDetailPage() {
             </Card>
           )}
 
-          <div className="space-y-6">
-            <div className="flex items-center gap-3">
-              <h2 className="text-2xl font-bold">レビュー</h2>
-              {reviews && reviews.length > 0 && (
-                <Badge variant="secondary" className="rounded-lg">{reviews.length}件</Badge>
-              )}
-            </div>
-
-            {reviewsLoading ? (
-              <div className="space-y-4">
-                <Skeleton className="h-36 w-full rounded-2xl" />
-                <Skeleton className="h-36 w-full rounded-2xl" />
-              </div>
-            ) : (
-              <ReviewSection reviews={reviews || []} />
-            )}
-
-            <ReviewForm eventId={id!} />
-          </div>
         </div>
       </div>
     </Layout>
