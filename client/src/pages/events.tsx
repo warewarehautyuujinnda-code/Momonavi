@@ -22,11 +22,6 @@ const reasons = [
     description: "ばらばらになった情報を整理します",
   },
   {
-    icon: MessageCircle,
-    title: "実際に行った人の声が見られる",
-    description: "経験者たちのリアルな体験談を参考にできます",
-  },
-  {
     icon: MapPin,
     title: "岡山ローカルに絞って迷わない",
     description: "岡山大学・岡山理科大学・ノートルダム清心女子大学に特化",
