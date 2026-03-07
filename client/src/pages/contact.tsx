@@ -1530,6 +1530,24 @@ export default function ContactPage() {
                       アンケートの送信をもって、上記内容に同意いただいたものとみなします。
                     </p>
                   </div>
+
+                  <div className="rounded-xl bg-primary/5 border border-primary/15 p-4 space-y-2 text-sm">
+                    <p className="font-medium text-foreground">運営からのお願い</p>
+                    <p className="text-muted-foreground leading-relaxed">
+                      本サイトは非営利で運営しています。サービスをより多くの方に届けるため、
+                      もしよろしければ公式Instagramのフォローをお願いいたします（任意です）。
+                      また、新入生や団体の知り合いにこのサイト・Instagramアカウントを紹介していただけると、とても励みになります。
+                    </p>
+                    <a
+                      href="https://www.instagram.com/momonavi.okayama"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 text-primary font-medium hover:underline"
+                    >
+                      <SiInstagram className="h-3.5 w-3.5" />
+                      @momonavi.okayama をフォローする
+                    </a>
+                  </div>
                   <div className="flex items-center gap-3">
                     <Checkbox
                       id="consent"
