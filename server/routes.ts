@@ -180,6 +180,8 @@ export async function registerRoutes(
         groupAtmosphereTags: z.array(z.string()).min(1, "雰囲気タグを1つ以上選択してください"),
         eventMapUrl: z.string().optional().nullable(),
         eventImageUrl: z.string().optional().nullable(),
+        groupImages: z.array(z.string()).optional().nullable(),
+        eventImages: z.array(z.string()).optional().nullable(),
       });
 
       const validatedData = submissionSchema.parse(req.body);
@@ -246,7 +248,7 @@ export async function registerRoutes(
           beginnerWelcome: submission.eventBeginnerWelcome ?? true,
           soloFriendliness: submission.eventSoloFriendliness ?? 3,
           atmosphereTags: submission.groupAtmosphereTags,
-          imageUrl: submission.eventImageUrl,
+          imageUrl: (submission.eventImages && submission.eventImages.length > 0) ? submission.eventImages[0] : submission.eventImageUrl,
           mapUrl: submission.eventMapUrl,
           status: "approved",
         });

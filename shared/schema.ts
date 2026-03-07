@@ -97,6 +97,8 @@ export const submissions = pgTable("submissions", {
   eventEndDate: text("event_end_date"),
   eventLocation: text("event_location"),
   eventImageUrl: text("event_image_url"),
+  groupImages: text("group_images").array(),
+  eventImages: text("event_images").array(),
   eventBeginnerWelcome: boolean("event_beginner_welcome"),
   eventSoloFriendliness: integer("event_solo_friendliness"),
   eventMapUrl: text("event_map_url"),

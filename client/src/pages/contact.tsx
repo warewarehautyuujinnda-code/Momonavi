@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   Mail, Send, Loader2, ChevronDown, CheckCircle, HelpCircle, Eye, Users,
-  Calendar, MapPin, Plus, X, Upload, Image, MessageSquare, ExternalLink, ChevronLeft,
+  Calendar, MapPin, Plus, X, Upload, MessageSquare, ExternalLink, ChevronLeft,
   Clock
 } from "lucide-react";
 import { SiInstagram, SiX, SiLine } from "react-icons/si";
@@ -79,8 +79,9 @@ const submissionFormSchema = z.object({
   eventEndDate: z.string().optional(),
   eventLocation: z.string().max(200).optional(),
   eventMapUrl: z.string().optional().or(z.literal("")),
-  eventImageUrl: z.string().optional(),
   eventBeginnerWelcome: z.boolean().optional(),
+  groupImages: z.array(z.string()).optional(),
+  eventImages: z.array(z.string()).optional(),
 });
 
 type SubmissionFormData = z.infer<typeof submissionFormSchema>;
@@ -152,8 +153,129 @@ function SelectWithCustom({
   );
 }
 
+function MultiImageUpload({
+  images,
+  onChange,
+  label,
+  maxImages = 5,
+  testId,
+}: {
+  images: string[];
+  onChange: (imgs: string[]) => void;
+  label: string;
+  maxImages?: number;
+  testId?: string;
+}) {
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFiles = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const remaining = maxImages - images.length;
+    if (files.length > remaining) {
+      toast({ title: `最大${maxImages}枚まで追加できます`, description: `あと${remaining}枚追加可能です` });
+    }
+    const toProcess = files.slice(0, remaining);
+    const newImages: string[] = [];
+    let processed = 0;
+    if (toProcess.length === 0) return;
+    toProcess.forEach((file) => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({ title: "ファイルが大きすぎます", description: `${file.name} は5MB以下にしてください`, variant: "destructive" });
+        processed++;
+        if (processed === toProcess.length) onChange([...images, ...newImages]);
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        newImages.push(ev.target?.result as string);
+        processed++;
+        if (processed === toProcess.length) onChange([...images, ...newImages]);
+      };
+      reader.readAsDataURL(file);
+    });
+    if (e.target) e.target.value = "";
+  };
+
+  const removeImage = (index: number) => {
+    onChange(images.filter((_, i) => i !== index));
+  };
+
+  return (
+    <div className="space-y-3">
+      {images.length > 0 && (
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          {images.map((src, i) => (
+            <div key={i} className="relative aspect-square rounded-xl overflow-hidden group">
+              <img src={src} alt={`画像${i + 1}`} className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => removeImage(i)}
+                className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                data-testid={`remove-image-${i}`}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {images.length < maxImages && (
+        <div
+          className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-5 text-center cursor-pointer hover:border-primary/40 transition-colors"
+          onClick={() => fileInputRef.current?.click()}
+          data-testid={testId}
+        >
+          <Upload className="h-6 w-6 mx-auto mb-2 text-muted-foreground/50" />
+          <p className="text-sm font-medium">{label}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">JPG / PNG / WebP — 1枚5MBまで（最大{maxImages}枚）</p>
+          {images.length > 0 && (
+            <p className="text-xs text-primary mt-1">{images.length}/{maxImages} 枚追加済み</p>
+          )}
+        </div>
+      )}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        multiple
+        className="hidden"
+        onChange={handleFiles}
+      />
+    </div>
+  );
+}
+
+function ImageGallery({ images, fallback }: { images?: string[]; fallback: string }) {
+  const [current, setCurrent] = useState(0);
+  const imgs = images && images.length > 0 ? images : [fallback];
+  const img = imgs[current] || fallback;
+
+  return (
+    <div className="space-y-2">
+      <div className="w-full aspect-video rounded-2xl overflow-hidden bg-muted">
+        <img src={img} alt={`画像${current + 1}`} className="w-full h-full object-cover" />
+      </div>
+      {imgs.length > 1 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {imgs.map((src, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setCurrent(i)}
+              className={`shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors ${i === current ? "border-primary" : "border-transparent"}`}
+            >
+              <img src={src} alt={`サムネイル${i + 1}`} className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function GroupDetailPreviewSheet({ data, open, onClose }: { data: Partial<SubmissionFormData>; open: boolean; onClose: () => void }) {
-  const imageUrl = data.eventImageUrl || getImageForGenre(data.groupGenre);
+  const fallbackImg = getImageForGenre(data.groupGenre);
   const hasLinks = data.groupInstagramUrl || data.groupTwitterUrl || data.groupLineUrl;
 
   return (
@@ -183,16 +305,7 @@ function GroupDetailPreviewSheet({ data, open, onClose }: { data: Partial<Submis
         </SheetHeader>
 
         <div className="p-6 space-y-6">
-          <div className="w-full aspect-video bg-muted rounded-2xl overflow-hidden flex items-center justify-center">
-            {data.eventImageUrl ? (
-              <img src={data.eventImageUrl} alt={data.groupName} className="w-full h-full object-cover" />
-            ) : (
-              <div className="text-center text-muted-foreground">
-                <Image className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">写真準備中</p>
-              </div>
-            )}
-          </div>
+          <ImageGallery images={data.groupImages} fallback={fallbackImg} />
 
           <Card className="rounded-2xl border-0 shadow-sm">
             <CardContent className="p-6 space-y-5">
@@ -258,7 +371,7 @@ function GroupDetailPreviewSheet({ data, open, onClose }: { data: Partial<Submis
 }
 
 function EventDetailPreviewSheet({ data, open, onClose }: { data: Partial<SubmissionFormData>; open: boolean; onClose: () => void }) {
-  const imageUrl = data.eventImageUrl || getImageForGenre(data.groupGenre);
+  const fallbackImg = getImageForGenre(data.groupGenre);
   const startLabel = data.eventDate ? formatDateTime(data.eventDate) : "日時未設定";
   const endLabel = data.eventEndDate ? formatDateTime(data.eventEndDate) : null;
 
@@ -286,16 +399,7 @@ function EventDetailPreviewSheet({ data, open, onClose }: { data: Partial<Submis
         </SheetHeader>
 
         <div className="p-6 space-y-6">
-          <div className="w-full aspect-video rounded-2xl overflow-hidden bg-muted flex items-center justify-center">
-            {imageUrl !== cultureImg || data.eventImageUrl ? (
-              <img src={imageUrl} alt={data.eventTitle} className="w-full h-full object-cover" />
-            ) : (
-              <div className="text-center text-muted-foreground">
-                <Image className="h-10 w-10 mx-auto mb-2 opacity-40" />
-                <p className="text-sm">写真準備中</p>
-              </div>
-            )}
-          </div>
+          <ImageGallery images={data.eventImages} fallback={fallbackImg} />
 
           <Card className="rounded-2xl border-0 shadow-sm">
             <CardContent className="p-6 space-y-4">
@@ -371,7 +475,7 @@ function EventDetailPreviewSheet({ data, open, onClose }: { data: Partial<Submis
 }
 
 function GroupPreviewCard({ data, onClick }: { data: Partial<SubmissionFormData>; onClick: () => void }) {
-  const imageUrl = data.eventImageUrl || getImageForGenre(data.groupGenre);
+  const imageUrl = (data.groupImages && data.groupImages[0]) || getImageForGenre(data.groupGenre);
 
   return (
     <Card
@@ -432,7 +536,7 @@ function GroupPreviewCard({ data, onClick }: { data: Partial<SubmissionFormData>
 }
 
 function EventPreviewCard({ data, onClick }: { data: Partial<SubmissionFormData>; onClick: () => void }) {
-  const imageUrl = data.eventImageUrl || getImageForGenre(data.groupGenre);
+  const imageUrl = (data.eventImages && data.eventImages[0]) || getImageForGenre(data.groupGenre);
   const startLabel = data.eventDate ? formatDateTime(data.eventDate) : "日時未設定";
   const endLabel = data.eventEndDate ? formatDateTime(data.eventEndDate) : null;
 
@@ -681,12 +785,10 @@ export default function ContactPage() {
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
   const [showEventFields, setShowEventFields] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [customTagInput, setCustomTagInput] = useState("");
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [groupSheetOpen, setGroupSheetOpen] = useState(false);
   const [eventSheetOpen, setEventSheetOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<SubmissionFormData>({
     resolver: zodResolver(submissionFormSchema),
@@ -710,8 +812,9 @@ export default function ContactPage() {
       eventEndDate: "",
       eventLocation: "",
       eventMapUrl: "",
-      eventImageUrl: "",
       eventBeginnerWelcome: true,
+      groupImages: [],
+      eventImages: [],
     },
   });
 
@@ -740,22 +843,6 @@ export default function ContactPage() {
   const removeTag = (tag: string) => {
     const current = form.getValues("groupAtmosphereTags") || [];
     form.setValue("groupAtmosphereTags", current.filter(t => t !== tag), { shouldValidate: true });
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "ファイルが大きすぎます", description: "5MB以下のファイルを選択してください", variant: "destructive" });
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = (ev) => {
-      const base64 = ev.target?.result as string;
-      setImagePreview(base64);
-      form.setValue("eventImageUrl", base64);
-    };
-    reader.readAsDataURL(file);
   };
 
   const mutation = useMutation({
@@ -802,7 +889,6 @@ export default function ContactPage() {
                 onClick={() => {
                   setSubmitted(false);
                   setShowEventFields(false);
-                  setImagePreview(null);
                   setConsentAccepted(false);
                   form.reset();
                 }}
@@ -1069,6 +1155,18 @@ export default function ContactPage() {
                       />
                     </div>
                   </div>
+
+                  <div className="space-y-2">
+                    <Label>団体の写真（任意）</Label>
+                    <MultiImageUpload
+                      images={form.watch("groupImages") || []}
+                      onChange={(imgs) => form.setValue("groupImages", imgs)}
+                      label="クリックして団体の写真を追加"
+                      maxImages={5}
+                      testId="dropzone-group-images"
+                    />
+                    <p className="text-xs text-muted-foreground">活動の様子や団体の雰囲気が伝わる写真を追加できます</p>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1168,55 +1266,13 @@ export default function ContactPage() {
                       {/* 画像アップロード */}
                       <div className="space-y-2">
                         <Label>イベント画像（任意）</Label>
-                        <div
-                          className="border-2 border-dashed border-muted-foreground/25 rounded-xl p-6 text-center cursor-pointer hover:border-primary/40 transition-colors"
-                          onClick={() => fileInputRef.current?.click()}
-                          data-testid="dropzone-image"
-                        >
-                          {imagePreview ? (
-                            <div className="space-y-3">
-                              <img
-                                src={imagePreview}
-                                alt="プレビュー"
-                                className="max-h-48 mx-auto rounded-xl object-cover"
-                              />
-                              <p className="text-sm text-muted-foreground">クリックして変更</p>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <div className="flex justify-center">
-                                <Upload className="h-8 w-8 text-muted-foreground/50" />
-                              </div>
-                              <p className="text-sm font-medium">クリックして画像を選択</p>
-                              <p className="text-xs text-muted-foreground">JPG, PNG, WebP — 最大5MB</p>
-                            </div>
-                          )}
-                        </div>
-                        <input
-                          ref={fileInputRef}
-                          type="file"
-                          accept="image/jpeg,image/png,image/webp"
-                          className="hidden"
-                          onChange={handleImageChange}
-                          data-testid="input-event-image"
+                        <MultiImageUpload
+                          images={form.watch("eventImages") || []}
+                          onChange={(imgs) => form.setValue("eventImages", imgs)}
+                          label="クリックしてイベントの写真を追加"
+                          maxImages={5}
+                          testId="dropzone-event-images"
                         />
-                        {imagePreview && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive rounded-xl"
-                            onClick={() => {
-                              setImagePreview(null);
-                              form.setValue("eventImageUrl", "");
-                              if (fileInputRef.current) fileInputRef.current.value = "";
-                            }}
-                            data-testid="button-remove-image"
-                          >
-                            <X className="h-4 w-4 mr-1" />
-                            画像を削除
-                          </Button>
-                        )}
                       </div>
                     </CardContent>
                   </CollapsibleContent>
