@@ -215,7 +215,7 @@ export default function EventDetailPage() {
           <p className="text-lg text-muted-foreground mb-6">
             イベントが見つかりませんでした
           </p>
-          <Link href="/events">
+          <Link href="/">
             <Button variant="outline" className="gap-2 rounded-xl">
               <ChevronLeft className="h-4 w-4" />
               イベント一覧に戻る
@@ -233,7 +233,7 @@ export default function EventDetailPage() {
     <Layout>
       <div className="container-narrow py-10 sm:py-14">
         <div className="space-y-8">
-          <Link href="/events">
+          <Link href="/">
             <Button variant="ghost" className="gap-2 -ml-4 rounded-xl" data-testid="button-back">
               <ChevronLeft className="h-4 w-4" />
               イベント一覧
