@@ -323,11 +323,16 @@ function EventDetailPreviewSheet({ data, open, onClose }: { data: Partial<Submis
                     <p className="text-xs text-muted-foreground">開催場所</p>
                     <p className="font-medium text-sm">{data.eventLocation || "未設定"}</p>
                     {data.eventMapUrl && (
-                      <span className="inline-flex items-center gap-1 text-xs text-primary mt-1">
+                      <a
+                        href={data.eventMapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 text-xs text-primary mt-1 hover:underline"
+                      >
                         <MapPin className="h-3 w-3" />
                         地図で見る
                         <ExternalLink className="h-3 w-3" />
-                      </span>
+                      </a>
                     )}
                   </div>
                 </div>
