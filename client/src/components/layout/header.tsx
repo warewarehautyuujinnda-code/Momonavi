@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Calendar, Users, Mail, Menu, X } from "lucide-react";
 import { useState } from "react";
-import logoImg from "@assets/4_mk2U1SpZkwBOZcgYevdA1q_1771742587946_na1fn_L2hvbWUvdWJ1bnR1L_1772850885926.png";
+import logoImg from "@/assets/images/momonavi-logo.png";
 
 export function Header() {
   const [location] = useLocation();
@@ -20,28 +20,20 @@ export function Header() {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-pink-100/60 backdrop-blur-md"
-      style={{
-        background: "linear-gradient(135deg, rgba(255,235,240,0.92) 0%, rgba(240,235,255,0.92) 50%, rgba(220,235,255,0.92) 100%)",
-      }}
-    >
+    <header className="sticky top-0 z-50 w-full bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 dark:bg-background/95 dark:supports-[backdrop-filter]:bg-background/80 border-b border-border/40">
       <div className="container-narrow">
         <div className="flex h-16 items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2 hover-elevate rounded-xl px-1 py-1 -mx-1" data-testid="link-home">
-            <img src={logoImg} alt="MOMONAVI" className="h-14 w-auto" />
+          <Link href="/" className="flex items-center gap-2 hover-elevate rounded-xl px-3 py-2 -mx-3" data-testid="link-home">
+            <img src={logoImg} alt="MOMONAVI" className="h-16 w-auto" />
           </Link>
 
           <nav className="hidden lg:flex items-center gap-1">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <Button
-                  variant="ghost"
+                  variant={isActive(item.href) ? "secondary" : "ghost"}
                   size="sm"
-                  className={`gap-2 rounded-xl transition-colors font-medium ${
-                    isActive(item.href)
-                      ? "bg-pink-100/80 text-pink-700 hover:bg-pink-200/80"
-                      : "text-rose-900/70 hover:bg-pink-50/80 hover:text-pink-700"
-                  }`}
+                  className="gap-2 rounded-xl"
                   data-testid={`nav-${item.href === "/" ? "events" : item.href.slice(1)}`}
                 >
                   <item.icon className="h-4 w-4" />
@@ -54,7 +46,7 @@ export function Header() {
           <Button
             variant="ghost"
             size="icon"
-            className="lg:hidden rounded-xl text-rose-900/70 hover:bg-pink-50/80 hover:text-pink-700"
+            className="lg:hidden rounded-xl"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             data-testid="button-mobile-menu"
           >
@@ -63,16 +55,12 @@ export function Header() {
         </div>
 
         {mobileMenuOpen && (
-          <nav className="lg:hidden py-4 border-t border-pink-100/60 flex flex-col gap-1">
+          <nav className="lg:hidden py-4 border-t flex flex-col gap-1">
             {navItems.map((item) => (
               <Link key={item.href} href={item.href}>
                 <Button
-                  variant="ghost"
-                  className={`w-full justify-start gap-3 rounded-xl font-medium ${
-                    isActive(item.href)
-                      ? "bg-pink-100/80 text-pink-700"
-                      : "text-rose-900/70 hover:bg-pink-50/80 hover:text-pink-700"
-                  }`}
+                  variant={isActive(item.href) ? "secondary" : "ghost"}
+                  className="w-full justify-start gap-3 rounded-xl"
                   onClick={() => setMobileMenuOpen(false)}
                   data-testid={`mobile-nav-${item.href === "/" ? "events" : item.href.slice(1)}`}
                 >
