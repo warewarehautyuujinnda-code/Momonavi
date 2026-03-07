@@ -10,23 +10,10 @@ import { MasonryGrid } from "@/components/ui/masonry-grid";
 import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { SearchX, ArrowRight, Users, MessageCircle, MapPin } from "lucide-react";
+import { SearchX, ArrowRight, Users } from "lucide-react";
 import type { EventWithGroup } from "@shared/schema";
 import heroImage from "@assets/image_1770376446693.png";
 import momonaviLogo from "@/assets/images/momonavi-logo.png";
-
-const reasons = [
-  {
-    icon: Users,
-    title: "イベントを中心とした検索機能",
-    description: "ばらばらになった情報を整理します",
-  },
-  {
-    icon: MapPin,
-    title: "岡山ローカルに絞って迷わない",
-    description: "岡山大学・岡山理科大学・ノートルダム清心女子大学に特化",
-  },
-];
 
 export default function EventsPage() {
   const searchParams = useSearch();
@@ -111,14 +98,6 @@ export default function EventsPage() {
               岡山の大学新歓イベントをまとめて検索。
               新しい出会いへの一歩を応援します。
             </p>
-            <div className="flex flex-wrap justify-center gap-2 pt-2">
-              {reasons.map((reason, i) => (
-                <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground bg-white/80 dark:bg-muted/50 rounded-xl px-3 py-2 shadow-sm" data-testid={`hero-reason-${i}`}>
-                  <reason.icon className="h-4 w-4 text-primary shrink-0" />
-                  <span>{reason.title}</span>
-                </div>
-              ))}
-            </div>
             <div className="flex gap-3 pt-2">
               <Link href="/groups">
                 <Button variant="outline" className="gap-2 rounded-xl" data-testid="hero-link-groups">
