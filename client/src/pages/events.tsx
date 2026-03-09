@@ -10,7 +10,8 @@ import { MasonryGrid } from "@/components/ui/masonry-grid";
 import { SakuraPetals } from "@/components/decorations/sakura-petals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
-import { SearchX, ArrowRight, Users } from "lucide-react";
+import { SearchX, ArrowRight, Users, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import type { EventWithGroup } from "@shared/schema";
 import heroImage from "@assets/image_1770376446693.png";
 import momonaviLogo from "@/assets/images/momonavi-logo.png";
@@ -21,6 +22,7 @@ export default function EventsPage() {
   const initialUniversity = urlParams.get("university");
 
   const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<EventFilters>({
     university: initialUniversity,
     category: null,
@@ -75,9 +77,19 @@ export default function EventsPage() {
           }
         }
       }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchTitle = event.title?.toLowerCase().includes(q);
+        const matchDescription = event.description?.toLowerCase().includes(q);
+        const matchGroupName = event.group?.name?.toLowerCase().includes(q);
+        const matchGenre = event.group?.genre?.toLowerCase().includes(q);
+        if (!matchTitle && !matchDescription && !matchGroupName && !matchGenre) {
+          return false;
+        }
+      }
       return true;
     }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [events, filters]);
+  }, [events, filters, searchQuery]);
 
   return (
     <Layout>
@@ -126,6 +138,19 @@ export default function EventsPage() {
             <p className="text-muted-foreground text-lg">
               気になるイベントをタップして詳細を見よう
             </p>
+          </div>
+
+          {/* キーワード検索 */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="text"
+              placeholder="イベント名・団体名・ジャンルで検索…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 rounded-xl"
+              data-testid="input-search"
+            />
           </div>
 
           <EventFiltersComponent 

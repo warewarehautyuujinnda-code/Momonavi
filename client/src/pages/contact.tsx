@@ -823,12 +823,12 @@ function InquiryForm() {
 export default function ContactPage() {
   const { toast } = useToast();
   const [submitted, setSubmitted] = useState(false);
-  const [showEventFields, setShowEventFields] = useState(false);
   const [customTagInput, setCustomTagInput] = useState("");
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [groupSheetOpen, setGroupSheetOpen] = useState(false);
   const [eventSheetOpen, setEventSheetOpen] = useState(false);
   const [groupSearchQuery, setGroupSearchQuery] = useState("");
+  const [currentStep, setCurrentStep] = useState(0);
 
   const { data: allGroups = [] } = useQuery<GroupWithEvents[]>({
     queryKey: ["/api/groups"],
@@ -871,6 +871,39 @@ export default function ContactPage() {
   const isUpdateGroup = submissionType === 'update_group';
   const needsGroupSelect = isAddEvent || isUpdateGroup;
 
+  const stepMeta = isAddEvent
+    ? [
+        { id: 'type' as const, label: '申請タイプ' },
+        { id: 'requester' as const, label: '連絡先' },
+        { id: 'event' as const, label: 'イベント情報' },
+        { id: 'confirm' as const, label: '確認' },
+      ]
+    : [
+        { id: 'type' as const, label: '申請タイプ' },
+        { id: 'requester' as const, label: '連絡先' },
+        { id: 'group' as const, label: '団体情報' },
+        { id: 'event' as const, label: 'イベント情報' },
+        { id: 'confirm' as const, label: '確認' },
+      ];
+  const currentStepId = stepMeta[currentStep]?.id ?? 'type';
+
+  const goNext = async () => {
+    let fields: string[] = [];
+    if (currentStepId === 'type' && needsGroupSelect) {
+      fields = ['targetGroupId'];
+    } else if (currentStepId === 'requester') {
+      fields = ['requesterEmail'];
+    } else if (currentStepId === 'group') {
+      fields = ['groupName', 'groupUniversity', 'groupCategory', 'groupGenre', 'groupDescription', 'groupAtmosphereTags'];
+    } else if (currentStepId === 'event' && isAddEvent) {
+      fields = ['eventTitle', 'eventLocation'];
+    }
+    const valid = fields.length === 0 || await form.trigger(fields as any);
+    if (valid) setCurrentStep(s => Math.min(s + 1, stepMeta.length - 1));
+  };
+
+  const goBack = () => setCurrentStep(s => Math.max(s - 1, 0));
+
   const selectedGroup = allGroups.find(g => g.id === targetGroupId);
 
   const filteredGroups = allGroups.filter(g =>
@@ -909,6 +942,7 @@ export default function ContactPage() {
     form.setValue("groupTwitterUrl", "");
     form.setValue("groupLineUrl", "");
     setGroupSearchQuery("");
+    setCurrentStep(0);
   };
 
   const watchedData = form.watch();
@@ -1025,6 +1059,34 @@ export default function ContactPage() {
           <TabsContent value="submission" className="mt-8">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
 
+              {/* ステップインジケーター */}
+              <div className="flex items-center gap-0">
+                {stepMeta.map((step, i) => (
+                  <div key={step.id} className="flex items-center flex-1 last:flex-none">
+                    <div className="flex flex-col items-center gap-1">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
+                        i < currentStep
+                          ? 'bg-primary text-primary-foreground'
+                          : i === currentStep
+                          ? 'bg-primary text-primary-foreground ring-4 ring-primary/20'
+                          : 'bg-muted text-muted-foreground'
+                      }`}>
+                        {i < currentStep ? <CheckCircle className="h-4 w-4" /> : i + 1}
+                      </div>
+                      <span className={`text-xs whitespace-nowrap hidden sm:block ${i === currentStep ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
+                        {step.label}
+                      </span>
+                    </div>
+                    {i < stepMeta.length - 1 && (
+                      <div className={`h-px flex-1 mx-2 mb-4 sm:mb-0 transition-colors ${i < currentStep ? 'bg-primary' : 'bg-muted'}`} />
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* ===== Step: 申請タイプ ===== */}
+              {currentStepId === 'type' && <>
+
               {/* 申請タイプ選択 */}
               <Card className="rounded-2xl border-0 shadow-sm">
                 <CardHeader className="p-6 sm:p-8 pb-0">
@@ -1126,6 +1188,11 @@ export default function ContactPage() {
                 </Card>
               )}
 
+              </> /* end type step */}
+
+              {/* ===== Step: 申請者情報 ===== */}
+              {currentStepId === 'requester' && <>
+
               {/* 申請者情報 */}
               <Card className="rounded-2xl border-0 shadow-sm">
                 <CardHeader className="p-6 sm:p-8 pb-0">
@@ -1164,8 +1231,12 @@ export default function ContactPage() {
                 </CardContent>
               </Card>
 
-              {/* 団体情報 — add_event の場合は非表示 */}
-              {!isAddEvent && (
+              </> /* end requester step */}
+
+              {/* ===== Step: 団体情報 ===== */}
+              {currentStepId === 'group' && <>
+
+              {/* 団体情報 */}
               <Card className="rounded-2xl border-0 shadow-sm">
                 <CardHeader className="p-6 sm:p-8 pb-0">
                   <div className="flex items-center gap-3">
@@ -1379,39 +1450,34 @@ export default function ContactPage() {
                   </div>
                 </CardContent>
               </Card>
-              )}
+
+              </> /* end group step */}
+
+              {/* ===== Step: イベント情報 ===== */}
+              {currentStepId === 'event' && <>
 
               {/* イベント情報 */}
               <Card className="rounded-2xl border-0 shadow-sm">
-                <Collapsible open={isAddEvent || showEventFields} onOpenChange={isAddEvent ? undefined : setShowEventFields}>
-                  <CollapsibleTrigger asChild>
-                    <button
-                      type="button"
-                      className={`w-full p-6 sm:p-8 flex items-center justify-between text-left rounded-2xl ${isAddEvent ? "cursor-default" : "hover-elevate"}`}
-                      data-testid="toggle-event-section"
-                      disabled={isAddEvent}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                          <Calendar className="h-5 w-5 text-primary" />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-semibold">
-                            イベント情報
-                            {isAddEvent && <span className="text-destructive text-sm font-normal ml-2">（必須）</span>}
-                          </h3>
-                          <p className="text-sm text-muted-foreground">
-                            {isAddEvent ? "追加するイベントの情報を入力してください" : "任意 — イベントも同時に掲載する場合"}
-                          </p>
-                        </div>
-                      </div>
-                      {!isAddEvent && (
-                        <ChevronDown className={`h-5 w-5 text-muted-foreground shrink-0 transition-transform ${showEventFields ? 'rotate-180' : ''}`} />
-                      )}
-                    </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <CardContent className="p-6 sm:p-8 pt-0 space-y-4">
+                <CardHeader className="p-6 sm:p-8 pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl">
+                        イベント情報
+                        {isAddEvent
+                          ? <span className="text-destructive text-sm font-normal ml-2">（必須）</span>
+                          : <span className="text-muted-foreground text-sm font-normal ml-2">（任意）</span>
+                        }
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {isAddEvent ? "追加するイベントの情報を入力してください" : "イベントも同時に掲載する場合はご記入ください"}
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                    <CardContent className="p-6 sm:p-8 pt-6 space-y-4">
                       <div className="space-y-2">
                         <Label htmlFor="eventTitle">イベント名</Label>
                         <Input
@@ -1494,8 +1560,6 @@ export default function ContactPage() {
                         />
                       </div>
                     </CardContent>
-                  </CollapsibleContent>
-                </Collapsible>
               </Card>
 
               {/* その他メッセージ */}
@@ -1514,6 +1578,11 @@ export default function ContactPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              </> /* end event step */}
+
+              {/* ===== Step: 確認・送信 ===== */}
+              {currentStepId === 'confirm' && <>
 
               {/* 同意文 */}
               <Card className="rounded-2xl border-0 shadow-sm bg-muted/40">
@@ -1562,22 +1631,7 @@ export default function ContactPage() {
                 </CardContent>
               </Card>
 
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full gap-2 rounded-xl"
-                disabled={mutation.isPending || !consentAccepted}
-                data-testid="button-submit"
-              >
-                {mutation.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
-                )}
-                掲載依頼を送信する
-              </Button>
-
-              {/* プレビュー (ボトム) */}
+              {/* プレビュー */}
               <div className="space-y-4 pt-4 border-t">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Eye className="h-4 w-4" />
@@ -1588,20 +1642,62 @@ export default function ContactPage() {
                   {!isAddEvent && (
                     <GroupPreviewCard data={watchedData} onClick={() => setGroupSheetOpen(true)} />
                   )}
-                  {(isAddEvent || showEventFields) && (
-                    <EventPreviewCard
-                      data={isAddEvent && selectedGroup ? {
-                        ...watchedData,
-                        groupName: selectedGroup.name,
-                        groupGenre: selectedGroup.genre,
-                        groupUniversity: selectedGroup.university,
-                      } : watchedData}
-                      onClick={() => setEventSheetOpen(true)}
-                    />
-                  )}
+                  <EventPreviewCard
+                    data={isAddEvent && selectedGroup ? {
+                      ...watchedData,
+                      groupName: selectedGroup.name,
+                      groupGenre: selectedGroup.genre,
+                      groupUniversity: selectedGroup.university,
+                    } : watchedData}
+                    onClick={() => setEventSheetOpen(true)}
+                  />
                 </div>
                 {isAddEvent && !watchedData.eventTitle && (
                   <p className="text-xs text-muted-foreground text-center">イベント情報を入力するとプレビューが表示されます</p>
+                )}
+              </div>
+
+              </> /* end confirm step */}
+
+              {/* ===== ナビゲーションボタン ===== */}
+              <div className="flex gap-3 pt-2">
+                {currentStep > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="lg"
+                    className="gap-2 rounded-xl"
+                    onClick={goBack}
+                    data-testid="button-back"
+                  >
+                    ← 戻る
+                  </Button>
+                )}
+                {currentStepId !== 'confirm' ? (
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="flex-1 gap-2 rounded-xl"
+                    onClick={goNext}
+                    data-testid="button-next"
+                  >
+                    次へ →
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="flex-1 gap-2 rounded-xl"
+                    disabled={mutation.isPending || !consentAccepted}
+                    data-testid="button-submit"
+                  >
+                    {mutation.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    掲載依頼を送信する
+                  </Button>
                 )}
               </div>
             </form>

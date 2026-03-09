@@ -14,7 +14,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Filter, X, SearchX } from "lucide-react";
+import { Filter, X, SearchX, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import type { GroupWithEvents } from "@shared/schema";
 
 interface GroupFilters {
@@ -30,12 +31,13 @@ export default function GroupsPage() {
     atmosphereTag: null,
   });
   const [showFilters, setShowFilters] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: groups, isLoading } = useQuery<GroupWithEvents[]>({
     queryKey: ["/api/groups"],
   });
 
-  const hasActiveFilters = filters.university || filters.category || filters.atmosphereTag;
+  const hasActiveFilters = filters.university || filters.category || filters.atmosphereTag || searchQuery;
 
   // Extract unique filter options from actual data
   const filterOptions = useMemo(() => {
@@ -61,9 +63,19 @@ export default function GroupsPage() {
       if (filters.atmosphereTag && !(group.atmosphereTags || []).includes(filters.atmosphereTag)) {
         return false;
       }
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        const matchName = group.name?.toLowerCase().includes(q);
+        const matchGenre = group.genre?.toLowerCase().includes(q);
+        const matchDescription = group.description?.toLowerCase().includes(q);
+        const matchUniversity = group.university?.toLowerCase().includes(q);
+        if (!matchName && !matchGenre && !matchDescription && !matchUniversity) {
+          return false;
+        }
+      }
       return true;
     });
-  }, [groups, filters]);
+  }, [groups, filters, searchQuery]);
 
   const clearFilters = () => {
     setFilters({
@@ -71,6 +83,7 @@ export default function GroupsPage() {
       category: null,
       atmosphereTag: null,
     });
+    setSearchQuery("");
   };
 
   return (
@@ -88,6 +101,19 @@ export default function GroupsPage() {
           </div>
 
           <div className="space-y-4">
+            {/* キーワード検索 */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                type="text"
+                placeholder="団体名・ジャンル・説明で検索…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 rounded-xl"
+                data-testid="input-search"
+              />
+            </div>
+
             <div className="flex items-center justify-between gap-2">
               <Button
                 variant="outline"
@@ -97,7 +123,7 @@ export default function GroupsPage() {
               >
                 <Filter className="h-4 w-4" />
                 絞り込み
-                {hasActiveFilters && (
+                {(filters.university || filters.category || filters.atmosphereTag) && (
                   <span className="ml-1 h-5 w-5 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center">
                     !
                   </span>

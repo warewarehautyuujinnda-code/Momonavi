@@ -26,7 +26,7 @@ client/src/
 │   ├── event-detail.tsx   # イベント詳細
 │   ├── groups.tsx         # 団体検索
 │   ├── group-detail.tsx   # 団体詳細
-│   └── contact.tsx        # お問い合わせ＆掲載依頼 (3タブ: 掲載依頼/お問い合わせ/FAQ、プレビューSheet付き)
+│   └── contact.tsx        # お問い合わせ＆掲載依頼 (3タブ: 掲載依頼/お問い合わせ/FAQ、ステップ形式フォーム、プレビューSheet付き)
 ├── components/
 │   ├── layout/
 │   │   ├── header.tsx     # 3項目ナビ + モバイル対応
