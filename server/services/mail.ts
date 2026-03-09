@@ -156,6 +156,29 @@ export async function sendContactNotification(data: { name?: string; email: stri
   return sendMail(adminEmail, subject, body);
 }
 
+export async function sendContactConfirmation(data: { name?: string; email: string; message: string }): Promise<boolean> {
+  const subject = `【新歓ナビ】お問い合わせを受け付けました`;
+  const body = [
+    `${data.name || 'お問い合わせ者'} 様`,
+    ``,
+    `この度は新歓ナビへお問い合わせいただきありがとうございます。`,
+    `以下の内容でお問い合わせを受け付けました。`,
+    ``,
+    `--- お問い合わせ内容 ---`,
+    data.message,
+    ``,
+    `内容を確認後、このメールアドレス宛にご連絡いたします。`,
+    `通常 2〜3 営業日以内にご連絡差し上げます。`,
+    ``,
+    `ご不明な点がございましたら、再度お問い合わせフォームからご連絡ください。`,
+    ``,
+    `新歓ナビ運営チーム`,
+    `https://momonavi.replit.app`,
+  ].filter(Boolean).join('\n');
+
+  return sendMail(data.email, subject, body);
+}
+
 export async function sendApprovalNotification(submission: Submission): Promise<boolean> {
   const subject = `【新歓ナビ】掲載が承認されました: ${submission.groupName}`;
   const body = [

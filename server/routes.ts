@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { insertSubmissionSchema } from "@shared/schema";
-import { sendAdminNotification, sendApprovalNotification, sendContactNotification, sendSubmissionConfirmation } from "./services/mail";
+import { sendAdminNotification, sendApprovalNotification, sendContactNotification, sendContactConfirmation, sendSubmissionConfirmation } from "./services/mail";
 
 const adminAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers["x-admin-key"];
@@ -360,6 +360,9 @@ export async function registerRoutes(
       const validatedData = contactSchema.parse(req.body);
       sendContactNotification(validatedData).catch((err) => {
         console.error("[mail] Contact notification failed (non-blocking):", err);
+      });
+      sendContactConfirmation(validatedData).catch((err) => {
+        console.error("[mail] Contact confirmation failed (non-blocking):", err);
       });
       res.status(200).json({ success: true });
     } catch (error) {
