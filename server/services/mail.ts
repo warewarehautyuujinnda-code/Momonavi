@@ -53,6 +53,12 @@ async function sendMail(to: string, subject: string, body: string): Promise<bool
   }
 }
 
+const submissionTypeLabel: Record<string, string> = {
+  new: '新規掲載申請',
+  add_event: 'イベント追加申請',
+  update_group: '情報更新申請',
+};
+
 export async function sendAdminNotification(submission: Submission): Promise<boolean> {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) {
@@ -60,21 +66,26 @@ export async function sendAdminNotification(submission: Submission): Promise<boo
     return false;
   }
 
-  const subject = `【新歓ナビ】新しい掲載依頼: ${submission.groupName}`;
+  const typeLabel = submissionTypeLabel[submission.submissionType ?? 'new'] ?? '掲載申請';
+  const displayName = submission.groupName || `対象グループID: ${submission.targetGroupId}`;
+  const subject = `【新歓ナビ】${typeLabel}: ${displayName}`;
   const body = [
-    `新しい掲載依頼が届きました。`,
+    `新しい${typeLabel}が届きました。`,
+    ``,
+    `申請タイプ: ${typeLabel}`,
+    submission.targetGroupId ? `対象グループID: ${submission.targetGroupId}` : null,
     ``,
     `--- 申請者情報 ---`,
     `メール: ${submission.requesterEmail}`,
     submission.requesterName ? `名前: ${submission.requesterName}` : null,
     ``,
-    `--- 団体情報 ---`,
-    `団体名: ${submission.groupName}`,
-    `大学: ${submission.groupUniversity}`,
-    `区分: ${submission.groupCategory}`,
-    `ジャンル: ${submission.groupGenre}`,
-    `説明: ${submission.groupDescription}`,
-    `雰囲気タグ: ${submission.groupAtmosphereTags.join(', ')}`,
+    submission.groupName ? `--- 団体情報 ---` : null,
+    submission.groupName ? `団体名: ${submission.groupName}` : null,
+    submission.groupUniversity ? `大学: ${submission.groupUniversity}` : null,
+    submission.groupCategory ? `区分: ${submission.groupCategory}` : null,
+    submission.groupGenre ? `ジャンル: ${submission.groupGenre}` : null,
+    submission.groupDescription ? `説明: ${submission.groupDescription}` : null,
+    submission.groupAtmosphereTags?.length ? `雰囲気タグ: ${submission.groupAtmosphereTags.join(', ')}` : null,
     submission.groupContactInfo ? `連絡先: ${submission.groupContactInfo}` : null,
     submission.groupInstagramUrl ? `Instagram: ${submission.groupInstagramUrl}` : null,
     submission.groupTwitterUrl ? `Twitter: ${submission.groupTwitterUrl}` : null,
@@ -94,6 +105,33 @@ export async function sendAdminNotification(submission: Submission): Promise<boo
   ].filter(Boolean).join('\n');
 
   return sendMail(adminEmail, subject, body);
+}
+
+export async function sendSubmissionConfirmation(submission: Submission): Promise<boolean> {
+  const typeLabel = submissionTypeLabel[submission.submissionType ?? 'new'] ?? '掲載申請';
+  const displayName = submission.groupName || 'ご申請の団体';
+
+  const subject = `【新歓ナビ】${typeLabel}を受け付けました`;
+  const body = [
+    `${submission.requesterName || '申請者'} 様`,
+    ``,
+    `この度は新歓ナビにお申し込みいただきありがとうございます。`,
+    `以下の内容で${typeLabel}を受け付けました。`,
+    ``,
+    `申請タイプ: ${typeLabel}`,
+    submission.groupName ? `団体名: ${displayName}` : null,
+    submission.eventTitle ? `イベント名: ${submission.eventTitle}` : null,
+    ``,
+    `内容を確認後、このメールアドレス宛にご連絡いたします。`,
+    `通常 2〜3 営業日以内にご連絡差し上げます。`,
+    ``,
+    `ご不明な点がございましたら、サイトのお問い合わせフォームからご連絡ください。`,
+    ``,
+    `新歓ナビ運営チーム`,
+    `https://momonavi.replit.app`,
+  ].filter(Boolean).join('\n');
+
+  return sendMail(submission.requesterEmail, subject, body);
 }
 
 export async function sendContactNotification(data: { name?: string; email: string; message: string }): Promise<boolean> {

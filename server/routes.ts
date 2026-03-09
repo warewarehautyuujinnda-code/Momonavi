@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { insertSubmissionSchema } from "@shared/schema";
-import { sendAdminNotification, sendApprovalNotification, sendContactNotification } from "./services/mail";
+import { sendAdminNotification, sendApprovalNotification, sendContactNotification, sendSubmissionConfirmation } from "./services/mail";
 
 const adminAuth = (req: any, res: any, next: any) => {
   const authHeader = req.headers["x-admin-key"];
@@ -207,6 +207,10 @@ export async function registerRoutes(
 
       sendAdminNotification(submission).catch((err) => {
         console.error("[mail] Admin notification failed (non-blocking):", err);
+      });
+
+      sendSubmissionConfirmation(submission).catch((err) => {
+        console.error("[mail] Submission confirmation failed (non-blocking):", err);
       });
 
       res.status(201).json({ success: true, id: submission.id });

@@ -1585,11 +1585,24 @@ export default function ContactPage() {
                   <span className="text-xs">— カードをクリックして詳細を確認</span>
                 </div>
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <GroupPreviewCard data={watchedData} onClick={() => setGroupSheetOpen(true)} />
-                  {showEventFields && (
-                    <EventPreviewCard data={watchedData} onClick={() => setEventSheetOpen(true)} />
+                  {!isAddEvent && (
+                    <GroupPreviewCard data={watchedData} onClick={() => setGroupSheetOpen(true)} />
+                  )}
+                  {(isAddEvent || showEventFields) && (
+                    <EventPreviewCard
+                      data={isAddEvent && selectedGroup ? {
+                        ...watchedData,
+                        groupName: selectedGroup.name,
+                        groupGenre: selectedGroup.genre,
+                        groupUniversity: selectedGroup.university,
+                      } : watchedData}
+                      onClick={() => setEventSheetOpen(true)}
+                    />
                   )}
                 </div>
+                {isAddEvent && !watchedData.eventTitle && (
+                  <p className="text-xs text-muted-foreground text-center">イベント情報を入力するとプレビューが表示されます</p>
+                )}
               </div>
             </form>
 
