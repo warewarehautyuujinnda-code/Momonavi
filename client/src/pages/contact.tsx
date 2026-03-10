@@ -1322,7 +1322,7 @@ export default function ContactPage() {
                     <Label htmlFor="groupDescription">団体説明 <span className="text-destructive">*</span></Label>
                     <Textarea
                       id="groupDescription"
-                      placeholder="活動内容や魅力を教えてください"
+                      placeholder="活動内容（活動日、活動人数など）や魅力を教えてください"
                       rows={3}
                       className="rounded-xl resize-none"
                       {...form.register("groupDescription")}
