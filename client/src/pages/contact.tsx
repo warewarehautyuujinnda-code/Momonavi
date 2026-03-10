@@ -1094,12 +1094,12 @@ export default function ContactPage() {
                 </CardHeader>
                 <CardContent className="p-6 sm:p-8 pt-4 space-y-3">
                   {([
-                    { type: 'new' as SubmissionType, icon: Sparkles, label: '新規掲載申請', desc: '新しい団体・イベントを掲載する' },
-                    { type: 'add_event' as SubmissionType, icon: PlusCircle, label: 'イベント追加申請', desc: '既存の団体に新しいイベントを追加する' },
-                    { type: 'update_group' as SubmissionType, icon: RefreshCw, label: '情報更新申請', desc: '既存の団体情報やイベント情報を更新する' },
-                  ]).map(({ type, icon: Icon, label, desc }) => (
+                    { type: 'new' as SubmissionType, icon: Sparkles, label: '新規掲載申請', desc: '新しい団体・イベントを掲載する', note: null },
+                    { type: 'add_event' as SubmissionType, icon: PlusCircle, label: 'イベント追加申請', desc: '既存の団体に新しいイベントを追加する', note: 'イベント内容が同じで複数日ある場合は、お問い合わせよりその旨をご連絡ください。' },
+                    { type: 'update_group' as SubmissionType, icon: RefreshCw, label: '情報更新申請', desc: '既存の団体情報やイベント情報を更新する', note: null },
+                  ]).map(({ type, icon: Icon, label, desc, note }) => (
+                    <div key={type} className="space-y-1.5">
                     <button
-                      key={type}
                       type="button"
                       onClick={() => handleSubmissionTypeChange(type)}
                       data-testid={`submission-type-${type}`}
@@ -1120,6 +1120,12 @@ export default function ContactPage() {
                         <CheckCircle className="h-5 w-5 text-primary ml-auto shrink-0" />
                       )}
                     </button>
+                    {note && (
+                      <p className="text-xs text-muted-foreground pl-2 leading-relaxed">
+                        ※ {note}
+                      </p>
+                    )}
+                    </div>
                   ))}
                 </CardContent>
               </Card>
