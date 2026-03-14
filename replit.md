@@ -182,3 +182,22 @@ admin認証: `x-admin-key` ヘッダーに `SESSION_SECRET` の値を設定
 - ナビゲーションを5項目→3項目に簡素化
 - articles, companion_posts, contact_submissions テーブルを削除
 - server/notion.ts, server/notion-sync.ts, server/scheduler.ts を削除
+
+## GitHub Pages で公開する手順（静的サイト）
+
+今回のフロントは **ハッシュルーティング**（`/#/contact` の形式）にしているため、
+GitHub Pages でもページ遷移時の 404 を避けやすくしています。
+
+1. リポジトリの **Settings > Pages** を開く
+2. **Build and deployment** の Source を `GitHub Actions` に変更
+3. `main` ブランチへ push（または Actions の `Deploy to GitHub Pages` を手動実行）
+4. 公開URLは通常 `https://<username>.github.io/<repo>/` になります
+   - このリポジトリ名が `Momonavi` の場合: `https://<username>.github.io/Momonavi/`
+
+### 404 が出るときのチェック
+- `https://<username>.github.io/` ではなく、**`/<repo>/` 付きURL** を開いているか
+- Actions の `Deploy to GitHub Pages` が成功しているか
+- Pages の Source が `Deploy from branch` のままになっていないか（`GitHub Actions` にする）
+
+- Actions が失敗した場合は `Actions > Deploy to GitHub Pages > build` を開き、
+  `Install dependencies` / `Verify toolchain` / `Build static site` のどこで失敗したかを確認
