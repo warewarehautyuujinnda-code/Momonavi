@@ -4,6 +4,12 @@ import logoImg from "@/assets/images/momonavi-logo.png";
 
 export function Footer() {
   const siteLinks = [
+    {
+      href: "https://docs.google.com/forms/d/e/1FAIpQLSdLEiiExA-lh_m6XCbr2kfBeOgL1MLOJ6Lut7n_flk-1hHd4Q/viewform?usp=dialog",
+      label: "お問い合わせ＆掲載依頼",
+      icon: ExternalLink,
+      description: "Googleフォームで受付中"
+    },
     { 
       href: "https://instagram.com/shinkan_navi", 
       label: "Instagram", 
