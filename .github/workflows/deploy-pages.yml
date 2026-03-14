@@ -29,7 +29,7 @@ jobs:
           cache: npm
 
       - name: Install dependencies (including devDependencies)
-        run: npm install --include=dev
+        run: npm ci --include=dev || npm install --include=dev
 
       - name: Verify toolchain
         run: |
