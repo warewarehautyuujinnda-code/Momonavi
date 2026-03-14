@@ -18,8 +18,8 @@ export default function ContactPage() {
             </Badge>
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Googleフォームからご連絡ください</h1>
             <p className="text-muted-foreground text-base md:text-lg leading-relaxed">
-              MOMONAVIではサイトを静的構成に変更したため、
-              お問い合わせ・掲載依頼の受付はGoogleフォームに一本化しています。
+              MOMONAVIは岡山の大学新歓イベント情報をまとめたサイトです。
+              お問い合わせ・掲載依頼はGoogleフォームからお願いいたします。
             </p>
           </div>
 

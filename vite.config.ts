@@ -19,7 +19,7 @@ export default defineConfig({
         ]
       : []),
   ],
-  base: "./",
+  base: process.env.GITHUB_PAGES === 'true' ? '/Momonavi/' : './',
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
