@@ -9,8 +9,11 @@ import { ExternalLink, Mail, MessageCircle } from "lucide-react";
 const SUBMISSION_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSdLEiiExA-lh_m6XCbr2kfBeOgL1MLOJ6Lut7n_flk-1hHd4Q/viewform?usp=dialog";
 
-// 問い合わせフォームのURL（作成後にこちらに設定してください）
-const INQUIRY_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeWFk8IHuQLKyMDFem0cCWeKXW5xnOypIZBSobjRqtDOZg3gQ/viewform?usp=publish-editor"; // ← ここにGoogleフォームのURLを貼り付けてください
+// 問い合わせフォームのURL
+const INQUIRY_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeWFk8IHuQLKyMDFem0cCWeKXW5xnOypIZBSobjRqtDOZg3gQ/viewform?usp=sf_link";
+
+// URLが設定されているかチェック
+const hasInquiryForm = INQUIRY_FORM_URL && INQUIRY_FORM_URL.length > 0 && !INQUIRY_FORM_URL.includes("ここにGoogleフォームのURLを貼り付けてください");
 // ====================
 
 export default function ContactPage() {
@@ -65,7 +68,7 @@ export default function ContactPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {INQUIRY_FORM_URL ? (
+              {hasInquiryForm ? (
                 <Button asChild size="lg" variant="outline" className="w-full rounded-xl" data-testid="button-open-inquiry-form">
                   <a href={INQUIRY_FORM_URL} target="_blank" rel="noopener noreferrer">
                     お問い合わせフォームを開く
