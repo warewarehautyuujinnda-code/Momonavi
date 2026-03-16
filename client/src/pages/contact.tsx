@@ -69,14 +69,14 @@ export default function ContactPage() {
             </CardHeader>
             <CardContent>
               {hasInquiryForm ? (
-                <Button asChild size="lg" variant="outline" className="w-full rounded-xl" data-testid="button-open-inquiry-form">
+                <Button asChild size="lg" className="w-full rounded-xl" data-testid="button-open-inquiry-form">
                   <a href={INQUIRY_FORM_URL} target="_blank" rel="noopener noreferrer">
                     お問い合わせフォームを開く
                     <ExternalLink className="ml-2 h-4 w-4" />
                   </a>
                 </Button>
               ) : (
-                <Button size="lg" variant="outline" className="w-full rounded-xl" disabled>
+                <Button size="lg" className="w-full rounded-xl" disabled>
                   お問い合わせフォームは準備中です
                 </Button>
               )}
