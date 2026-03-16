@@ -10,7 +10,7 @@ const SUBMISSION_FORM_URL =
   "https://docs.google.com/forms/d/e/1FAIpQLSdLEiiExA-lh_m6XCbr2kfBeOgL1MLOJ6Lut7n_flk-1hHd4Q/viewform?usp=dialog";
 
 // 問い合わせフォームのURL（作成後にこちらに設定してください）
-const INQUIRY_FORM_URL = ""; // ← ここにGoogleフォームのURLを貼り付けてください
+const INQUIRY_FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSeWFk8IHuQLKyMDFem0cCWeKXW5xnOypIZBSobjRqtDOZg3gQ/viewform?usp=publish-editor"; // ← ここにGoogleフォームのURLを貼り付けてください
 // ====================
 
 export default function ContactPage() {
