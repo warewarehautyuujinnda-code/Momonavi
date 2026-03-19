@@ -392,6 +392,24 @@ export const sampleEvents: Event[] = [
     status: "approved",
     createdAt: new Date(),
   },
+  // 繰り返しイベントのサンプル（毎週月・水・金の定期練習）
+  {
+    id: "okadai-kyudo-regular",
+    groupId: "okadai-kyudo",
+    title: "体育会弓道部 定期練習",
+    description: "毎週月・水・金曜日に行われる定期練習です。初心者から経験者まで参加できます。見学も随時歓迎しています。",
+    date: new Date("2026-04-06T09:00:00Z"),
+    endDate: new Date("2026-04-06T12:00:00Z"),
+    location: "岡山大学 津島キャンパス 弓道場",
+    beginnerWelcome: true,
+    soloFriendliness: 4,
+    atmosphereTags: ["定期練習", "初心者歓迎", "真剣"],
+    // 繰り返し設定: 月(1)・水(3)・金(5)、2026年7月末まで
+    repeatDays: "1,3,5",
+    repeatEndDate: new Date("2026-07-31T23:59:59Z"),
+    status: "approved",
+    createdAt: new Date(),
+  },
   {
     id: "okadai-football-shinkan",
     groupId: "okadai-football",

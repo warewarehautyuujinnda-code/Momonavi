@@ -21,6 +21,7 @@ import {
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { EventWithGroup, Event } from "@shared/schema";
+import { formatRepeatDays } from "@/lib/repeatEvents";
 
 function generateGoogleCalendarUrl(event: EventWithGroup): string {
   const startDate = new Date(event.date);
@@ -195,14 +196,25 @@ export default function EventDetailPage() {
                   <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <p className="font-semibold">
-                      {format(eventDate, "yyyy年M月d日(E)", { locale: ja })}
-                    </p>
+                      {format(eventDate, "yyyy年M月d日(E)", { locale: ja })}</p>
                     <p className="text-sm text-muted-foreground">
                       {format(eventDate, "HH:mm", { locale: ja })}
-                      {event.endDate ? `〜${format(new Date(event.endDate), "HH:mm", { locale: ja })}` : "〜"}
+                      {event.endDate ? `～${format(new Date(event.endDate), "HH:mm", { locale: ja })}` : "～"}
                     </p>
+                    {event.repeatDays && (
+                      <div className="flex items-center gap-1.5 mt-1">
+                        <span className="inline-flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 rounded-md px-2 py-0.5">
+                          繰り返し: 毎週{formatRepeatDays(event.repeatDays)}
+                        </span>
+                        {event.repeatEndDate && (
+                          <span className="text-xs text-muted-foreground">
+                            ～{format(new Date(event.repeatEndDate), "yyyy年M月d日", { locale: ja })}まで
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -62,6 +62,10 @@ export const events = pgTable("events", {
   imageUrl: text("image_url"),
   mapUrl: text("map_url"),
   status: text("status").notNull().default('approved'),
+  // 繰り返し設定: 曜日リスト (0=日,1=月,...,6=土) をカンマ区切りで保存
+  repeatDays: text("repeat_days"),
+  // 繰り返し終了日
+  repeatEndDate: timestamp("repeat_end_date"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -102,6 +106,9 @@ export const submissions = pgTable("submissions", {
   eventBeginnerWelcome: boolean("event_beginner_welcome"),
   eventSoloFriendliness: integer("event_solo_friendliness"),
   eventMapUrl: text("event_map_url"),
+  // 繰り返し設定
+  eventRepeatDays: text("event_repeat_days"),
+  eventRepeatEndDate: text("event_repeat_end_date"),
   submissionType: text("submission_type").notNull().default('new'),
   targetGroupId: varchar("target_group_id", { length: 36 }),
   status: text("status").notNull().default('pending'),

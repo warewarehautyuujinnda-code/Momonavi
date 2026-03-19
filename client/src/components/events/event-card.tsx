@@ -1,10 +1,11 @@
 import { Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import type { EventWithGroup } from "@shared/schema";
+import { formatRepeatDays } from "@/lib/repeatEvents";
 
 import sportsImg from "@/assets/images/stock/sports-1.jpg";
 import musicImg from "@/assets/images/stock/music-1.jpg";
@@ -34,9 +35,11 @@ function getImageForGenre(genre?: string): string {
 export function EventCard({ event }: EventCardProps) {
   const eventDate = new Date(event.date);
   const imageUrl = event.imageUrl || getImageForGenre(event.group?.genre);
+  // 繰り返しインスタンスの場合は親イベントIDを使ってリンク先を元のイベントに向ける
+  const linkId = (event as any)._repeatParentId ?? event.id;
 
   return (
-    <Link href={`/events/${event.id}`} data-testid={`event-card-${event.id}`}>
+    <Link href={`/events/${linkId}`} data-testid={`event-card-${event.id}`}>
       <Card className="overflow-hidden hover-elevate active-elevate-2 cursor-pointer rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow">
         <div className="relative h-40 overflow-hidden" data-testid={`event-image-${event.id}`}>
           <img
@@ -49,6 +52,13 @@ export function EventCard({ event }: EventCardProps) {
             <Badge className="bg-white/90 text-foreground text-xs font-normal rounded-lg shadow-sm">
               {event.group?.university}
             </Badge>
+            {/* 繰り返しイベントバッジ */}
+            {event.repeatDays && (
+              <Badge className="bg-primary/90 text-white text-xs font-normal rounded-lg shadow-sm flex items-center gap-1">
+                <RefreshCw className="h-2.5 w-2.5" />
+                毎週{formatRepeatDays(event.repeatDays)}
+              </Badge>
+            )}
           </div>
         </div>
 

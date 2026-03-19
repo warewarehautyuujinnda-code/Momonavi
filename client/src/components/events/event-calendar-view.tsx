@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { EventCard } from "./event-card";
 import { format, isSameDay } from "date-fns";
 import { ja } from "date-fns/locale";
-import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { EventWithGroup } from "@shared/schema";
+import { isRepeatEvent, formatRepeatDays } from "@/lib/repeatEvents";
 
 interface EventCalendarViewProps {
   events: EventWithGroup[];
@@ -17,6 +18,7 @@ export function EventCalendarView({ events }: EventCalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
+  // 日付ごとのイベントマップを構築（繰り返しイベントの展開済みインスタンスを含む）
   const eventDates = useMemo(() => {
     const dates = new Map<string, EventWithGroup[]>();
     events.forEach((event) => {
@@ -29,6 +31,7 @@ export function EventCalendarView({ events }: EventCalendarViewProps) {
     return dates;
   }, [events]);
 
+  // 選択日のイベントを取得
   const selectedDateEvents = useMemo(() => {
     if (!selectedDate) return [];
     return events.filter((event) =>
@@ -40,6 +43,11 @@ export function EventCalendarView({ events }: EventCalendarViewProps) {
     const dateKey = format(date, "yyyy-MM-dd");
     return eventDates.has(dateKey);
   };
+
+  // 選択日に繰り返しイベントが含まれているか
+  const hasRepeatEventsOnSelectedDate = useMemo(() => {
+    return selectedDateEvents.some((e) => isRepeatEvent(e));
+  }, [selectedDateEvents]);
 
   return (
     <div className="space-y-6">
@@ -106,10 +114,14 @@ export function EventCalendarView({ events }: EventCalendarViewProps) {
               table: "w-full border-collapse",
             }}
           />
-          <div className="mt-4 flex items-center justify-center gap-4 text-sm text-muted-foreground">
+          <div className="mt-4 flex items-center justify-center gap-6 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <div className="h-2 w-2 rounded-full bg-primary" />
               イベントあり
+            </div>
+            <div className="flex items-center gap-2">
+              <RefreshCw className="h-3 w-3 text-primary/70" />
+              繰り返しイベント
             </div>
           </div>
         </CardContent>
@@ -121,9 +133,17 @@ export function EventCalendarView({ events }: EventCalendarViewProps) {
             <h3 className="text-lg font-semibold">
               {format(selectedDate, "M月d日（E）", { locale: ja })}のイベント
             </h3>
-            <Badge variant="secondary" className="rounded-xl">
-              {selectedDateEvents.length}件
-            </Badge>
+            <div className="flex items-center gap-2">
+              {hasRepeatEventsOnSelectedDate && (
+                <Badge variant="outline" className="rounded-xl flex items-center gap-1 text-xs border-primary/30 text-primary">
+                  <RefreshCw className="h-3 w-3" />
+                  繰り返し
+                </Badge>
+              )}
+              <Badge variant="secondary" className="rounded-xl">
+                {selectedDateEvents.length}件
+              </Badge>
+            </div>
           </div>
           {selectedDateEvents.length === 0 ? (
             <Card className="rounded-2xl border-0 shadow-sm">
@@ -134,7 +154,28 @@ export function EventCalendarView({ events }: EventCalendarViewProps) {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {selectedDateEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
+                <div key={event.id} className="relative">
+                  {isRepeatEvent(event) && (
+                    <div className="absolute top-2 right-2 z-10">
+                      <Badge
+                        variant="secondary"
+                        className="rounded-lg flex items-center gap-1 text-xs bg-primary/10 text-primary border-0 shadow-sm"
+                      >
+                        <RefreshCw className="h-2.5 w-2.5" />
+                        {(event as any)._repeatParentId &&
+                          (() => {
+                            const parent = events.find(
+                              (e) => e.id === (event as any)._repeatParentId
+                            );
+                            return parent?.repeatDays
+                              ? `毎週${formatRepeatDays(parent.repeatDays)}`
+                              : "繰り返し";
+                          })()}
+                      </Badge>
+                    </div>
+                  )}
+                  <EventCard event={event} />
+                </div>
               ))}
             </div>
           )}

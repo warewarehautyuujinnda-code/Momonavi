@@ -6,6 +6,7 @@ import {
   createEventsWithGroups,
   createGroupsWithEvents
 } from "./googleSheetsFetcher";
+import { expandRepeatEvents } from "./repeatEvents";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -72,7 +73,9 @@ export const getStaticQueryFn: <T>(options: {
           cachedGroups = await fetchGroupsFromGoogleSheets();
         }
         if (!cachedEventsWithGroups) {
-          cachedEventsWithGroups = createEventsWithGroups(cachedEvents, cachedGroups);
+          const baseEventsWithGroups = createEventsWithGroups(cachedEvents, cachedGroups);
+          // 繰り返しイベントを展開してカレンダー用データを生成
+          cachedEventsWithGroups = expandRepeatEvents(baseEventsWithGroups);
         }
         return cachedEventsWithGroups as T;
       }
@@ -86,7 +89,11 @@ export const getStaticQueryFn: <T>(options: {
         if (!cachedGroups) {
           cachedGroups = await fetchGroupsFromGoogleSheets();
         }
-        const event = cachedEvents.find(e => e.id === eventId);
+        // 繰り返しインスタンスIDの場合、親イベントIDを抽出して検索
+        const parentId = eventId?.includes("_repeat_")
+          ? eventId.split("_repeat_")[0]
+          : eventId;
+        const event = cachedEvents.find(e => e.id === parentId);
         if (!event) {
           throw new Error("404: Event not found");
         }

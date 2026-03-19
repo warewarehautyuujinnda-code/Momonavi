@@ -123,6 +123,9 @@ function parseEventFromSheet(row: GoogleSheetRow, index: number): Event | null {
       imageUrl: row.imageUrl ? String(row.imageUrl) : undefined,
       mapUrl: row.mapUrl ? String(row.mapUrl) : undefined,
       status: row.status ? String(row.status) : "approved",
+      // 繰り返し設定: repeatDaysはカンマ区切りの曜日番号文字列 (e.g. "1,3,5")
+      repeatDays: row.repeatDays ? String(row.repeatDays) : null,
+      repeatEndDate: row.repeatEndDate ? new Date(String(row.repeatEndDate)) : null,
       createdAt: new Date(),
     };
   } catch (error) {
